@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">BRIZBEE</string>
+    <string name="logout_name">Log out</string>
+    <string name="punch_in_name">Punch In</string>
+    <string name="punch_out_name">Punch Out</string>
+    <string name="continue_name">Continue</string>
+    <string name="cancel_name">Cancel</string>
+    <string name="text_customer_header">for customer</string>
+    <string name="text_job_header">on job</string>
+    <string name="text_task_header">doing task</string>
+    <string name="task_number_name">Enter Your Task Number</string>
+    <string name="scan_task_number_name">Scan Barcode</string>
+</resources>
