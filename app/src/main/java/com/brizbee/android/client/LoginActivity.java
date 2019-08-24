@@ -38,11 +38,10 @@ public class LoginActivity extends AppCompatActivity {
         EditText passwordText = findViewById(R.id.editPassword);
         String password = passwordText.getText().toString();
 
-        // Instantiate the RequestQueue.
-        RequestQueue queue = Volley.newRequestQueue(this);
+        // Instantiate the RequestQueue
         String url ="https://brizbee.gowitheast.com/odata/Users/Default.Authenticate";
 
-        // Request a string response from the provided URL.
+        // Request a string response from the provided URL
         JSONObject jsonBody = new JSONObject();
         try {
             JSONObject session = new JSONObject();
@@ -122,7 +121,7 @@ public class LoginActivity extends AppCompatActivity {
         RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
         jsonRequest.setRetryPolicy(policy);
 
-        // Add the request to the RequestQueue.
-        queue.add(jsonRequest);
+        // Add the request to the RequestQueue
+        MySingleton.getInstance(this).addToRequestQueue(jsonRequest);
     }
 }

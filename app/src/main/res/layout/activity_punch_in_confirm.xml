@@ -31,6 +31,7 @@
         android:layout_marginTop="24dp"
         android:layout_marginEnd="64dp"
         android:layout_marginRight="64dp"
+        android:onClick="onContinueClick"
         android:text="@string/continue_name"
         android:textAllCaps="true"
         app:layout_constraintEnd_toEndOf="parent"

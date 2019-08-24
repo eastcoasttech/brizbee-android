@@ -40,8 +40,7 @@ public class StatusActivity extends AppCompatActivity {
     public void loadStatus() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        // Instantiate the RequestQueue.
-        RequestQueue queue = Volley.newRequestQueue(this);
+        // Instantiate the RequestQueue
         String url ="https://brizbee.gowitheast.com/odata/Punches/Default.Current?$expand=Task($expand=Job($expand=Customer))";
 
         JsonObjectRequest jsonRequest = new JsonObjectRequest
@@ -178,8 +177,8 @@ public class StatusActivity extends AppCompatActivity {
         RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
         jsonRequest.setRetryPolicy(policy);
 
-        // Add the request to the RequestQueue.
-        queue.add(jsonRequest);
+        // Add the request to the RequestQueue
+        MySingleton.getInstance(this).addToRequestQueue(jsonRequest);
     }
 
     public void onPunchInClick(View view) {

@@ -1,11 +1,15 @@
 package com.brizbee.android.client;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -86,12 +90,12 @@ public class PunchInTaskIdActivity extends AppCompatActivity implements View.OnC
     }
 
     public void confirm() {
+        // Lookup the task number
         final Intent intent = new Intent(this, PunchInConfirmActivity.class);
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         EditText editTaskNumber = findViewById(R.id.editTaskNumber);
 
-        // Instantiate the RequestQueue.
-        RequestQueue queue = Volley.newRequestQueue(this);
+        // Instantiate the RequestQueue
         String url = String.format("https://brizbee.gowitheast.com/odata/Tasks?$expand=Job($expand=Customer)&$filter=Number eq '%s'", editTaskNumber.getText());
 
         JsonObjectRequest jsonRequest = new JsonObjectRequest
@@ -111,6 +115,7 @@ public class PunchInTaskIdActivity extends AppCompatActivity implements View.OnC
                                 // Notify the user that the task number does not exist
                                 Toast toast = Toast.makeText(getApplicationContext(),
                                         "Not a valid task number, try again.", Toast.LENGTH_SHORT);
+                                toast.setGravity(Gravity.TOP, 0, 25);
                                 toast.show();
                             }
                         } catch (JSONException e) {
@@ -186,7 +191,7 @@ public class PunchInTaskIdActivity extends AppCompatActivity implements View.OnC
         RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
         jsonRequest.setRetryPolicy(policy);
 
-        // Add the request to the RequestQueue.
-        queue.add(jsonRequest);
+        // Add the request to the RequestQueue
+        MySingleton.getInstance(this).addToRequestQueue(jsonRequest);
     }
 }

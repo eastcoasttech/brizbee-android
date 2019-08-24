@@ -32,6 +32,9 @@ public class PunchInConfirmActivity extends AppCompatActivity {
     TextView textConfirmTask;
     TextView textConfirmCustomer;
     TextView textConfirmJob;
+    JSONObject task;
+    JSONObject job;
+    JSONObject customer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,9 +45,9 @@ public class PunchInConfirmActivity extends AppCompatActivity {
         textConfirmJob = findViewById(R.id.textConfirmJob);
 
         try {
-            JSONObject task = new JSONObject(getIntent().getStringExtra("task"));
-            JSONObject job = task.getJSONObject("Job");
-            JSONObject customer = job.getJSONObject("Customer");
+            task = new JSONObject(getIntent().getStringExtra("task"));
+            job = task.getJSONObject("Job");
+            customer = job.getJSONObject("Customer");
 
             // Task Number and Name
             textConfirmTask.setText(
@@ -77,41 +80,31 @@ public class PunchInConfirmActivity extends AppCompatActivity {
         finish(); // prevents going back
     }
 
+    public void onContinueClick(View view) {
+        save();
+    }
+
     public void save() {
         final Intent intent = new Intent(this, StatusActivity.class);
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        // Instantiate the RequestQueue.
-        RequestQueue queue = Volley.newRequestQueue(this);
+        // Instantiate the RequestQueue
         String url = "https://brizbee.gowitheast.com/odata/Punches/Default.PunchIn";
-
+        // Request a string response from the provided URL
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("TaskId", task.get("Id"));
+            jsonBody.put("SourceForInAt", "Mobile");
+            jsonBody.put("InAtTimeZone", "America/New_York");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         JsonObjectRequest jsonRequest = new JsonObjectRequest
-                (Request.Method.POST, url, null, new Response.Listener<JSONObject>() {
+                (Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        try {
-                            JSONArray value = response.getJSONArray("value");
-
-                            if (value.length() > 0) {
-                                JSONObject first = value.getJSONObject(0);
-                                startActivity(intent);
-                            } else {
-                                // Notify the user that the task number does not exist
-                                Toast toast = Toast.makeText(getApplicationContext(),
-                                        "Not a valid task number, try again.", Toast.LENGTH_SHORT);
-                                toast.show();
-                            }
-                        } catch (JSONException e) {
-                            builder.setMessage(e.toString())
-                                    .setTitle("Error")
-                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        }
+                        startActivity(intent);
+                        finish();
                     }
                 }, new Response.ErrorListener() {
                     @Override
@@ -174,7 +167,7 @@ public class PunchInConfirmActivity extends AppCompatActivity {
         RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
         jsonRequest.setRetryPolicy(policy);
 
-        // Add the request to the RequestQueue.
-        queue.add(jsonRequest);
+        // Add the request to the RequestQueue
+        MySingleton.getInstance(this).addToRequestQueue(jsonRequest);
     }
 }
