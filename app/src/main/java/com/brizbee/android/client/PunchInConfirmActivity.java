@@ -3,6 +3,7 @@ package com.brizbee.android.client;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -20,6 +21,13 @@ import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.brizbee.android.client.models.User;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,12 +37,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PunchInConfirmActivity extends AppCompatActivity {
-    TextView textConfirmTask;
-    TextView textConfirmCustomer;
-    TextView textConfirmJob;
-    JSONObject task;
-    JSONObject job;
-    JSONObject customer;
+    double currentLatitude = 0.0;
+    double currentLongitude = 0.0;
+    private TextView textConfirmTask;
+    private TextView textConfirmCustomer;
+    private TextView textConfirmJob;
+    private JSONObject task;
+    private JSONObject job;
+    private JSONObject customer;
+    private LocationCallback locationCallback;
+
+    private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +85,9 @@ public class PunchInConfirmActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        // Allows getting the last known location
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
     }
 
     public void onCancelClick(View view) {
@@ -81,7 +97,59 @@ public class PunchInConfirmActivity extends AppCompatActivity {
     }
 
     public void onContinueClick(View view) {
-        save();
+        try {
+//            // Recording current location is optional
+//            User user = ((MyApplication) getApplication()).getUser();
+//            if (user.getRequiresLocation()) {
+//                getCurrentLocation();
+////            fusedLocationClient.getLastLocation()
+////                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+////                    @Override
+////                    public void onSuccess(Location location) {
+////                        // Got last known location. In some rare situations this can be null.
+////                        if (location != null) {
+////                            currentLongitude = location.getLongitude();
+////                            currentLatitude = location.getLatitude();
+////                            save();
+////                        }
+////                    }
+////                });
+//            } else {
+//                save();
+//            }
+
+            save();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getCurrentLocation(){
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(5000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        fusedLocationClient.requestLocationUpdates(locationRequest,
+                locationCallback,
+                null /* Looper */);
+
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult != null) {
+                    for (Location location : locationResult.getLocations()) {
+                        // Get the coordinates of the location
+                        currentLatitude = location.getLatitude();
+                        currentLongitude = location.getLongitude();
+                        save();
+                    }
+                } else {
+                    save();
+                }
+            };
+        };
     }
 
     public void save() {
@@ -96,6 +164,14 @@ public class PunchInConfirmActivity extends AppCompatActivity {
             jsonBody.put("TaskId", task.get("Id"));
             jsonBody.put("SourceForInAt", "Mobile");
             jsonBody.put("InAtTimeZone", "America/New_York");
+
+            if (currentLatitude != 0.0 && currentLatitude != 0.0) {
+                jsonBody.put("LatitudeForInAt", currentLatitude);
+                jsonBody.put("LongitudeForInAt", currentLongitude);
+            } else {
+                jsonBody.put("LatitudeForInAt", "");
+                jsonBody.put("LongitudeForInAt", "");
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }

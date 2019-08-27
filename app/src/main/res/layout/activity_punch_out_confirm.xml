@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#f6f6f6"
+    android:background="#ffffff"
     tools:context=".PunchOutConfirmActivity">
 
     <TextView
@@ -31,9 +31,11 @@
         android:layout_marginTop="24dp"
         android:layout_marginEnd="64dp"
         android:layout_marginRight="64dp"
+        android:background="@drawable/custom_button_primary"
         android:onClick="onContinueClick"
         android:text="@string/continue_name"
         android:textAllCaps="true"
+        android:textColor="@color/colorWhite"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textConfirmOutTitle" />
@@ -47,6 +49,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="64dp"
         android:layout_marginRight="64dp"
+        android:background="@drawable/custom_button_secondary"
         android:onClick="onCancelClick"
         android:text="@string/cancel_name"
         android:textAllCaps="true"

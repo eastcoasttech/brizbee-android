@@ -20,12 +20,18 @@ import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.brizbee.android.client.models.User;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class StatusActivity extends AppCompatActivity {
@@ -34,6 +40,7 @@ public class StatusActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_status);
+        loadUser();
         loadStatus();
     }
 
@@ -56,7 +63,11 @@ public class StatusActivity extends AppCompatActivity {
                         TextView textJob = findViewById(R.id.textJob);
                         TextView textJobHeader = findViewById(R.id.textJobHeader);
                         TextView textSince = findViewById(R.id.textSince);
+                        TextView textSinceHeader = findViewById(R.id.textSinceHeader);
                         Button buttonPunchOut = findViewById(R.id.buttonPunchOut);
+                        // Format for parsing timestamps from server
+                        DateFormat dfServer = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH);
+                        DateFormat dfHuman = new SimpleDateFormat("MMM dd, yyyy hh:mma", Locale.ENGLISH);
 
                         JSONArray value = response.getJSONArray("value");
 
@@ -90,6 +101,10 @@ public class StatusActivity extends AppCompatActivity {
                                             job.getString("Number"),
                                             job.getString("Name"))
                             );
+
+                            // Format the since timestamp
+                            Date since = dfServer.parse(first.getString("InAt"));
+                            textSince.setText(dfHuman.format(since));
                         } else {
                             // Set color and text of status
                             textStatus.setTextColor(getResources().getColor(R.color.colorRed));
@@ -102,6 +117,7 @@ public class StatusActivity extends AppCompatActivity {
                             textTask.setVisibility(View.GONE);
                             textTaskHeader.setVisibility(View.GONE);
                             textSince.setVisibility(View.GONE);
+                            textSinceHeader.setVisibility(View.GONE);
                             buttonPunchOut.setVisibility(View.GONE);
                         }
                     } catch (JSONException e) {
@@ -114,6 +130,8 @@ public class StatusActivity extends AppCompatActivity {
                                 });
                         AlertDialog dialog = builder.create();
                         dialog.show();
+                    } catch (ParseException e) {
+                        e.printStackTrace();
                     }
                 }
             }, new Response.ErrorListener() {
@@ -162,8 +180,8 @@ public class StatusActivity extends AppCompatActivity {
                 String authUserId = ((MyApplication) getApplication()).getAuthUserId();
 
                 if (authExpiration != null && !authExpiration.isEmpty() &&
-                    authToken != null && !authToken.isEmpty() &&
-                    authUserId != null && !authUserId.isEmpty()) {
+                        authToken != null && !authToken.isEmpty() &&
+                        authUserId != null && !authUserId.isEmpty()) {
                     headers.put("AUTH_EXPIRATION", authExpiration);
                     headers.put("AUTH_TOKEN", authToken);
                     headers.put("AUTH_USER_ID", authUserId);
@@ -179,6 +197,15 @@ public class StatusActivity extends AppCompatActivity {
 
         // Add the request to the RequestQueue
         MySingleton.getInstance(this).addToRequestQueue(jsonRequest);
+    }
+
+    public void loadUser() {
+        TextView textHello = findViewById(R.id.textHello);
+        User user = ((MyApplication) getApplication()).getUser();
+
+        if (user != null) {
+            textHello.setText(String.format("Hello, %s", user.getName()));
+        }
     }
 
     public void onPunchInClick(View view) {

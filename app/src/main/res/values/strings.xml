@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">BRIZBEE</string>
+    <string name="login_name">Login</string>
     <string name="logout_name">Log out</string>
     <string name="punch_in_name">Punch In</string>
     <string name="punch_out_name">Punch Out</string>
@@ -10,4 +11,7 @@
     <string name="text_task_header">doing task</string>
     <string name="task_number_name">Enter Your Task Number</string>
     <string name="scan_task_number_name">Scan Barcode</string>
+    <string name="copyright_notice">Copyright © 2019 East Coast Technology Services LLC</string>
+    <string name="marketing_line_1">Don\'t have an account yet?</string>
+    <string name="marketing_line_2">Start Tracking Time for Free</string>
 </resources>
