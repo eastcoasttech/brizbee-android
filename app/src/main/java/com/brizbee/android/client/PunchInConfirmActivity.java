@@ -6,6 +6,9 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +24,7 @@ import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.brizbee.android.client.models.TimeZone;
 import com.brizbee.android.client.models.User;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -46,6 +50,9 @@ public class PunchInConfirmActivity extends AppCompatActivity {
     private JSONObject job;
     private JSONObject customer;
     private LocationCallback locationCallback;
+    private Spinner spinnerTimeZone;
+    private String[] timezonesIds;
+    private String selectedTimeZone;
 
     private FusedLocationProviderClient fusedLocationClient;
 
@@ -53,6 +60,9 @@ public class PunchInConfirmActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_punch_in_confirm);
+
+        // Get references from layouts
+        spinnerTimeZone = findViewById(R.id.spinnerTimeZone);
         textConfirmTask = findViewById(R.id.textConfirmTask);
         textConfirmCustomer = findViewById(R.id.textConfirmCustomer);
         textConfirmJob = findViewById(R.id.textConfirmJob);
@@ -88,6 +98,40 @@ public class PunchInConfirmActivity extends AppCompatActivity {
 
         // Allows getting the last known location
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        // Get timezones from application and configure spinner
+        TimeZone[] timezones = ((MyApplication) getApplication()).getTimeZones();
+        timezonesIds = new String[timezones.length];
+        for (int i = 0; i < timezones.length; i++) {
+            timezonesIds[i] = timezones[i].getId();
+        }
+
+        ArrayAdapter<String> adapter= new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_dropdown_item, timezonesIds);
+
+        spinnerTimeZone.setAdapter(adapter);
+
+        spinnerTimeZone.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                                       int position, long id) {
+                // Store selected item
+                int sid= spinnerTimeZone.getSelectedItemPosition();
+                selectedTimeZone = timezonesIds[sid];
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // TODO Auto-generated method stub
+            }
+        });
+
+        // Set selected item to be the user's time zone
+        User user = ((MyApplication) getApplication()).getUser();
+        for (int i = 0; i < timezonesIds.length; i++) {
+            if (timezonesIds[i].equalsIgnoreCase(user.getTimeZone())) {
+                spinnerTimeZone.setSelection(i);
+            }
+        }
     }
 
     public void onCancelClick(View view) {
@@ -163,7 +207,7 @@ public class PunchInConfirmActivity extends AppCompatActivity {
         try {
             jsonBody.put("TaskId", task.get("Id"));
             jsonBody.put("SourceForInAt", "Mobile");
-            jsonBody.put("InAtTimeZone", "America/New_York");
+            jsonBody.put("InAtTimeZone", selectedTimeZone);
 
             if (currentLatitude != 0.0 && currentLatitude != 0.0) {
                 jsonBody.put("LatitudeForInAt", currentLatitude);

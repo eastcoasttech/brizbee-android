@@ -5,6 +5,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -16,6 +20,8 @@ import com.android.volley.Response;
 import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.brizbee.android.client.models.TimeZone;
+import com.brizbee.android.client.models.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,11 +30,51 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PunchOutConfirmActivity extends AppCompatActivity {
+    private Spinner spinnerTimeZone;
+    private String[] timezonesIds;
+    private String selectedTimeZone;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_punch_out_confirm);
+
+        // Get references from layouts
+        spinnerTimeZone = findViewById(R.id.spinnerTimeZone);
+
+        // Get timezones from application and configure spinner
+        TimeZone[] timezones = ((MyApplication) getApplication()).getTimeZones();
+        timezonesIds = new String[timezones.length];
+        for (int i = 0; i < timezones.length; i++) {
+            timezonesIds[i] = timezones[i].getId();
+        }
+
+        ArrayAdapter<String> adapter= new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_dropdown_item, timezonesIds);
+
+        spinnerTimeZone.setAdapter(adapter);
+
+        spinnerTimeZone.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                                       int position, long id) {
+                // Store selected item
+                int sid= spinnerTimeZone.getSelectedItemPosition();
+                selectedTimeZone = timezonesIds[sid];
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // TODO Auto-generated method stub
+            }
+        });
+
+        // Set selected item to be the user's time zone
+        User user = ((MyApplication) getApplication()).getUser();
+        for (int i = 0; i < timezonesIds.length; i++) {
+            if (timezonesIds[i].equalsIgnoreCase(user.getTimeZone())) {
+                spinnerTimeZone.setSelection(i);
+            }
+        }
     }
 
     public void onCancelClick(View view) {
@@ -52,7 +98,7 @@ public class PunchOutConfirmActivity extends AppCompatActivity {
         JSONObject jsonBody = new JSONObject();
         try {
             jsonBody.put("SourceForOutAt", "Mobile");
-            jsonBody.put("OutAtTimeZone", "America/New_York");
+            jsonBody.put("OutAtTimeZone", selectedTimeZone);
         } catch (JSONException e) {
             e.printStackTrace();
         }

@@ -24,8 +24,10 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.brizbee.android.client.models.Organization;
+import com.brizbee.android.client.models.TimeZone;
 import com.brizbee.android.client.models.User;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -117,6 +119,8 @@ public class LoginActivity extends AppCompatActivity {
                             ((MyApplication) getApplication()).setAuthToken(authToken);
                             ((MyApplication) getApplication()).setAuthUserId(authUserId);
 
+                            // Load metadata
+                            getTimeZones();
                             getUserAndOrganization(Integer.parseInt(authUserId));
                         } catch (JSONException e) {
                             builder.setMessage(e.toString())
@@ -128,6 +132,96 @@ public class LoginActivity extends AppCompatActivity {
                                     });
                             AlertDialog dialog = builder.create();
                             dialog.show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        String json = null;
+
+                        NetworkResponse response = error.networkResponse;
+                        if(response != null && response.data != null) {
+                            switch(response.statusCode){
+                                case 400:
+//                            json = new String(response.data);
+//                            json = trimMessage(json, "message");
+//                            if(json != null) displayMessage(json);
+                                    break;
+                            }
+                            builder.setMessage(new String(response.data))
+                                    .setTitle(Integer.toString(response.statusCode))
+                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            dialog.dismiss();
+                                        }
+                                    });
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
+                        } else {
+                            builder.setMessage(error.toString())
+                                    .setTitle("Oops")
+                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            dialog.dismiss();
+                                        }
+                                    });
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
+                        }
+                    }
+                }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                headers.put("Content-Type", "application/json");
+
+                String authExpiration = ((MyApplication) getApplication()).getAuthExpiration();
+                String authToken = ((MyApplication) getApplication()).getAuthToken();
+                String authUserId = ((MyApplication) getApplication()).getAuthUserId();
+
+                if (authExpiration != null && !authExpiration.isEmpty() &&
+                        authToken != null && !authToken.isEmpty() &&
+                        authUserId != null && !authUserId.isEmpty()) {
+                    headers.put("AUTH_EXPIRATION", authExpiration);
+                    headers.put("AUTH_TOKEN", authToken);
+                    headers.put("AUTH_USER_ID", authUserId);
+                }
+
+                return headers;
+            }
+        };
+
+        int socketTimeout = 10000;
+        RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
+        jsonRequest.setRetryPolicy(policy);
+
+        // Add the request to the RequestQueue
+        MySingleton.getInstance(this).addToRequestQueue(jsonRequest);
+    }
+
+    public void getTimeZones() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        String url = "https://brizbee.gowitheast.com/odata/Organizations/Default.Timezones";
+
+        JsonObjectRequest jsonRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray value = response.getJSONArray("value");
+                            TimeZone[] timezones = new TimeZone[value.length()];
+                            for(int i = 0; i < value.length(); i++) {
+                                TimeZone zone = new TimeZone();
+                                zone.setCountryCode(value.getJSONObject(i).getString("CountryCode"));
+                                zone.setId(value.getJSONObject(i).getString("Id"));
+                                timezones[i] = zone;
+                            }
+
+                            // Store user in application variable
+                            ((MyApplication) getApplication()).setTimeZones(timezones);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
                     }
                 }, new Response.ErrorListener() {

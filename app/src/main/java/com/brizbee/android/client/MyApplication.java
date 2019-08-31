@@ -3,6 +3,7 @@ package com.brizbee.android.client;
 import android.app.Application;
 
 import com.brizbee.android.client.models.Organization;
+import com.brizbee.android.client.models.TimeZone;
 import com.brizbee.android.client.models.User;
 
 import org.json.JSONObject;
@@ -12,6 +13,7 @@ public class MyApplication extends Application {
     private String authToken;
     private String authUserId;
     private Organization organization;
+    private TimeZone[] timeZones;
     private User user;
 
     public String getAuthExpiration() {
@@ -44,6 +46,14 @@ public class MyApplication extends Application {
 
     public void setOrganization(Organization organization) {
         this.organization = organization;
+    }
+
+    public TimeZone[] getTimeZones() {
+        return timeZones;
+    }
+
+    public void setTimeZones(TimeZone[] timeZones) {
+        this.timeZones = timeZones;
     }
 
     public User getUser() {
