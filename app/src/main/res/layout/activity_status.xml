@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginLeft="24dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="18dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
             android:background="@drawable/custom_green_button"
@@ -28,7 +28,7 @@
             android:textColor="@color/colorWhite"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textSince" />
+            app:layout_constraintTop_toBottomOf="@+id/textTimeZone" />
 
         <Button
             android:id="@+id/buttonPunchOut"
@@ -103,7 +103,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginLeft="24dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
             android:text="@string/text_job_header"
@@ -124,6 +124,7 @@
             android:text="NUMBER - NAME"
             android:textSize="17sp"
             android:textStyle="bold"
+            android:textColor="@color/colorGreenDark"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textJobHeader" />
@@ -155,6 +156,7 @@
             android:text="NUMBER - NAME"
             android:textSize="17sp"
             android:textStyle="bold"
+            android:textColor="@color/colorGreenDark"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textCustomerHeader" />
@@ -187,6 +189,7 @@
             android:text="NUMBER - NAME"
             android:textSize="17sp"
             android:textStyle="bold"
+            android:textColor="@color/colorGreenDark"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textTaskHeader" />
@@ -215,11 +218,27 @@
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
             android:text="SINCE"
-            android:textSize="17sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textSinceHeader" />
+
+        <TextView
+            android:id="@+id/textTimeZone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginLeft="24dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginRight="24dp"
+            android:text="TIME ZONE"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textSince" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

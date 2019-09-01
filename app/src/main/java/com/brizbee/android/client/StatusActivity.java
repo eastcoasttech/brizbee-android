@@ -35,11 +35,38 @@ import java.util.Locale;
 import java.util.Map;
 
 public class StatusActivity extends AppCompatActivity {
+    private TextView textHello;
+    private TextView textStatus;
+    private TextView textTask;
+    private TextView textTaskHeader;
+    private TextView textCustomer;
+    private TextView textCustomerHeader;
+    private TextView textJob;
+    private TextView textJobHeader;
+    private TextView textSince;
+    private TextView textSinceHeader;
+    private TextView textTimeZone;
+    private Button buttonPunchOut;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_status);
+
+        // Get references from layouts
+        textHello = findViewById(R.id.textHello);
+        textStatus = findViewById(R.id.textStatus);
+        textTask = findViewById(R.id.textTask);
+        textTaskHeader = findViewById(R.id.textTaskHeader);
+        textCustomer = findViewById(R.id.textCustomer);
+        textCustomerHeader = findViewById(R.id.textCustomerHeader);
+        textJob = findViewById(R.id.textJob);
+        textJobHeader = findViewById(R.id.textJobHeader);
+        textSince = findViewById(R.id.textSince);
+        textSinceHeader = findViewById(R.id.textSinceHeader);
+        textTimeZone = findViewById(R.id.textTimeZone);
+        buttonPunchOut = findViewById(R.id.buttonPunchOut);
+
         loadUser();
         loadStatus();
     }
@@ -55,19 +82,9 @@ public class StatusActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(JSONObject response) {
                     try {
-                        TextView textStatus = findViewById(R.id.textStatus);
-                        TextView textTask = findViewById(R.id.textTask);
-                        TextView textTaskHeader = findViewById(R.id.textTaskHeader);
-                        TextView textCustomer = findViewById(R.id.textCustomer);
-                        TextView textCustomerHeader = findViewById(R.id.textCustomerHeader);
-                        TextView textJob = findViewById(R.id.textJob);
-                        TextView textJobHeader = findViewById(R.id.textJobHeader);
-                        TextView textSince = findViewById(R.id.textSince);
-                        TextView textSinceHeader = findViewById(R.id.textSinceHeader);
-                        Button buttonPunchOut = findViewById(R.id.buttonPunchOut);
                         // Format for parsing timestamps from server
                         DateFormat dfServer = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH);
-                        DateFormat dfHuman = new SimpleDateFormat("MMM dd, yyyy hh:mma", Locale.ENGLISH);
+                        DateFormat dfHuman = new SimpleDateFormat("MMM dd, yyyy h:mma", Locale.ENGLISH);
 
                         JSONArray value = response.getJSONArray("value");
 
@@ -78,7 +95,7 @@ public class StatusActivity extends AppCompatActivity {
                             JSONObject customer = job.getJSONObject("Customer");
 
                             // Set color and text of status
-                            textStatus.setTextColor(getResources().getColor(R.color.colorGreen));
+                            textStatus.setTextColor(getResources().getColor(R.color.colorGreenDark));
                             textStatus.setText("You are PUNCHED IN");
 
                             // Task Number and Name
@@ -105,6 +122,7 @@ public class StatusActivity extends AppCompatActivity {
                             // Format the since timestamp
                             Date since = dfServer.parse(first.getString("InAt"));
                             textSince.setText(dfHuman.format(since));
+                            textTimeZone.setText(first.getString("InAtTimeZone"));
                         } else {
                             // Set color and text of status
                             textStatus.setTextColor(getResources().getColor(R.color.colorRed));
@@ -118,6 +136,7 @@ public class StatusActivity extends AppCompatActivity {
                             textTaskHeader.setVisibility(View.GONE);
                             textSince.setVisibility(View.GONE);
                             textSinceHeader.setVisibility(View.GONE);
+                            textTimeZone.setVisibility(View.GONE);
                             buttonPunchOut.setVisibility(View.GONE);
                         }
                     } catch (JSONException e) {
@@ -200,7 +219,6 @@ public class StatusActivity extends AppCompatActivity {
     }
 
     public void loadUser() {
-        TextView textHello = findViewById(R.id.textHello);
         User user = ((MyApplication) getApplication()).getUser();
 
         if (user != null) {
