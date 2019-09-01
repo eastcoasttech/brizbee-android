@@ -39,6 +39,8 @@ import java.util.Map;
 
 public class LoginEmailFragment extends Fragment {
     private MyApplication application;
+    private  EditText editEmailAddress;
+    private EditText editPassword;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -57,8 +59,12 @@ public class LoginEmailFragment extends Fragment {
             }
         });
 
+        // Get references from layouts
+        editEmailAddress = view.findViewById(R.id.editEmail);
+        editPassword = view.findViewById(R.id.editPassword);
+
         // Focus on the email address
-        EditText editEmailAddress = view.findViewById(R.id.editEmail);
+        editEmailAddress.clearFocus();
         editEmailAddress.requestFocus();
 
         return view;
@@ -71,10 +77,8 @@ public class LoginEmailFragment extends Fragment {
 
     public void onLoginClick(View view) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this.getActivity());
-        EditText emailText = getView().findViewById(R.id.editEmail);
-        String emailAddress = emailText.getText().toString();
-        EditText passwordText = getView().findViewById(R.id.editPassword);
-        String password = passwordText.getText().toString();
+        String emailAddress = editEmailAddress.getText().toString();
+        String password = editPassword.getText().toString();
         String url ="https://brizbee.gowitheast.com/odata/Users/Default.Authenticate";
 
         // Request a string response from the provided URL

@@ -45,12 +45,18 @@ public class PunchInTaskIdActivity extends AppCompatActivity implements View.OnC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_punch_in_task_id);
+
+        // Get references from layouts
         buttonScan = findViewById(R.id.buttonScan);
         editTaskNumber = findViewById(R.id.editTaskNumber);
+
+        // Set the click listener
+        buttonScan.setOnClickListener(this);
+
+        // Focus on the task id
         if(editTaskNumber.requestFocus()) {
             getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
-        buttonScan.setOnClickListener(this);
     }
 
     public void onClick(View v){

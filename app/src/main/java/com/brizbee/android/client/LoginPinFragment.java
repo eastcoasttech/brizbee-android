@@ -38,6 +38,8 @@ import java.util.Map;
 
 public class LoginPinFragment extends Fragment {
     private MyApplication application;
+    private EditText editOrganizationCode;
+    private EditText editUserPin;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -56,8 +58,12 @@ public class LoginPinFragment extends Fragment {
             }
         });
 
+        // Get references from layouts
+        editOrganizationCode = view.findViewById(R.id.editOrganizationCode);
+        editUserPin = view.findViewById(R.id.editUserPin);
+
         // Focus on the organization code
-        EditText editOrganizationCode = view.findViewById(R.id.editOrganizationCode);
+        editOrganizationCode.clearFocus();
         editOrganizationCode.requestFocus();
 
         return view;
@@ -65,9 +71,7 @@ public class LoginPinFragment extends Fragment {
 
     public void onLoginClick(View view) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this.getActivity());
-        EditText editOrganizationCode = getView().findViewById(R.id.editOrganizationCode);
         String organizationCode = editOrganizationCode.getText().toString();
-        EditText editUserPin = getView().findViewById(R.id.editUserPin);
         String userPin = editUserPin.getText().toString();
         String url ="https://brizbee.gowitheast.com/odata/Users/Default.Authenticate";
 
