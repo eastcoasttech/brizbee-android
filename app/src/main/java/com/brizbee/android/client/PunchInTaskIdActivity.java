@@ -37,12 +37,14 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PunchInTaskIdActivity extends AppCompatActivity implements View.OnClickListener {
+public class PunchInTaskIdActivity extends AppCompatActivity implements View.OnClickListener
+{
     private Button buttonScan;
     private TextView editTaskNumber;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_punch_in_task_id);
 
@@ -54,48 +56,55 @@ public class PunchInTaskIdActivity extends AppCompatActivity implements View.OnC
         buttonScan.setOnClickListener(this);
 
         // Focus on the task id
-        if(editTaskNumber.requestFocus()) {
+        if(editTaskNumber.requestFocus())
+        {
             getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
     }
 
-    public void onClick(View v){
+    public void onClick(View v)
+    {
         // Respond to clicks
-        if(v.getId() == R.id.buttonScan){
+        if(v.getId() == R.id.buttonScan)
+        {
             //scan
             IntentIntegrator scanIntegrator = new IntentIntegrator(this);
             scanIntegrator.initiateScan();
         }
     }
 
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+    public void onActivityResult(int requestCode, int resultCode, Intent intent)
+    {
         // Retrieve the scan result
         IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
-        if (scanningResult != null) {
-            //we have a result
+        if (scanningResult != null)
+        {
             String scanContent = scanningResult.getContents();
-            String scanFormat = scanningResult.getFormatName();
-            editTaskNumber.setText(scanContent);
+            String scanFormat = scanningResult.getFormatName(); // barcode type
+            editTaskNumber.setText(""); // clear the text
+            editTaskNumber.setText(scanContent); // set the scanned value
             confirm(); // Verify that the task number is valid
         }
-        else{
-            Toast toast = Toast.makeText(getApplicationContext(),
-                    "No scan data received!", Toast.LENGTH_SHORT);
-            toast.show();
+        else
+        {
+            showDialog("No task number could be scanned, please try again.");
         }
     }
 
-    public void onCancelClick(View view) {
+    public void onCancelClick(View view)
+    {
         final Intent intent = new Intent(this, StatusActivity.class);
         startActivity(intent);
         finish(); // prevents going back
     }
 
-    public void onContinueClick(View view) {
+    public void onContinueClick(View view)
+    {
         confirm();
     }
 
-    public void confirm() {
+    public void confirm()
+    {
         // Lookup the task number
         final Intent intent = new Intent(this, PunchInConfirmActivity.class);
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -105,9 +114,11 @@ public class PunchInTaskIdActivity extends AppCompatActivity implements View.OnC
         String url = String.format("https://brizbee.gowitheast.com/odata/Tasks?$expand=Job($expand=Customer)&$filter=Number eq '%s'", editTaskNumber.getText());
 
         JsonObjectRequest jsonRequest = new JsonObjectRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>()
+                {
                     @Override
-                    public void onResponse(JSONObject response) {
+                    public void onResponse(JSONObject response)
+                    {
                         try {
                             JSONArray value = response.getJSONArray("value");
 
@@ -119,61 +130,30 @@ public class PunchInTaskIdActivity extends AppCompatActivity implements View.OnC
                                 startActivity(intent);
                             } else {
                                 // Notify the user that the task number does not exist
-                                Toast toast = Toast.makeText(getApplicationContext(),
-                                        "Not a valid task number, try again.", Toast.LENGTH_SHORT);
-                                toast.setGravity(Gravity.TOP, 0, 25);
-                                toast.show();
+                                showDialog("That's not a valid task number, please try again.");
                             }
                         } catch (JSONException e) {
-                            builder.setMessage(e.toString())
-                                    .setTitle("Error")
-                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
+                            showDialog("Could not understand the response from the server, please try again.");
                         }
                     }
-                }, new Response.ErrorListener() {
+                },
+                        new Response.ErrorListener()
+                {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
-                        String json = null;
-
+                    public void onErrorResponse(VolleyError error)
+                    {
                         NetworkResponse response = error.networkResponse;
-                        if(response != null && response.data != null) {
-                            switch(response.statusCode){
-                                case 400:
-//                            json = new String(response.data);
-//                            json = trimMessage(json, "message");
-//                            if(json != null) displayMessage(json);
-                                    break;
-                            }
-                            builder.setMessage(new String(response.data))
-                                    .setTitle(Integer.toString(response.statusCode))
-                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        } else {
-                            builder.setMessage(error.toString())
-                                    .setTitle("Oops")
-                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
+                        switch (response.statusCode)
+                        {
+                            default:
+                                showDialog("Could not reach the server, please try again.");
+                                break;
                         }
                     }
                 }) {
             @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
+            public Map<String, String> getHeaders() throws AuthFailureError
+            {
                 HashMap<String, String> headers = new HashMap<String, String>();
                 headers.put("Content-Type", "application/json");
 
@@ -199,5 +179,21 @@ public class PunchInTaskIdActivity extends AppCompatActivity implements View.OnC
 
         // Add the request to the RequestQueue
         MySingleton.getInstance(this).addToRequestQueue(jsonRequest);
+    }
+
+    private void showDialog(String message)
+    {
+        // Build a dialog with the given message to show the user
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        builder.setMessage(message)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int id)
+                    {
+                        dialog.dismiss();
+                    }
+                });
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
+        dialog.show();
     }
 }

@@ -72,8 +72,6 @@ public class StatusActivity extends AppCompatActivity {
     }
 
     public void loadStatus() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
         // Instantiate the RequestQueue
         String url ="https://brizbee.gowitheast.com/odata/Punches/Default.Current?$expand=Task($expand=Job($expand=Customer))";
 
@@ -140,57 +138,29 @@ public class StatusActivity extends AppCompatActivity {
                             buttonPunchOut.setVisibility(View.GONE);
                         }
                     } catch (JSONException e) {
-                        builder.setMessage(e.toString())
-                                .setTitle("Error")
-                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        dialog.dismiss();
-                                    }
-                                });
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
+                        showDialog("Could not understand the response from the server, please try again.");
                     } catch (ParseException e) {
-                        e.printStackTrace();
+                        showDialog("Could not understand the response from the server, please try again.");
                     }
                 }
-            }, new Response.ErrorListener() {
+            },
+                    new Response.ErrorListener()
+                    {
                 @Override
-                public void onErrorResponse(VolleyError error) {
-                    String json = null;
-
+                public void onErrorResponse(VolleyError error)
+                {
                     NetworkResponse response = error.networkResponse;
-                    if(response != null && response.data != null) {
-                        switch(response.statusCode){
-                            case 400:
-//                            json = new String(response.data);
-//                            json = trimMessage(json, "message");
-//                            if(json != null) displayMessage(json);
-                                break;
-                        }
-                        builder.setMessage(new String(response.data))
-                                .setTitle(Integer.toString(response.statusCode))
-                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        dialog.dismiss();
-                                    }
-                                });
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
-                    } else {
-                        builder.setMessage(error.toString())
-                                .setTitle("Oops")
-                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        dialog.dismiss();
-                                    }
-                                });
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
+                    switch (response.statusCode)
+                    {
+                        default:
+                            showDialog("Could not reach the server, please try again.");
+                            break;
                     }
                 }
             }) {
             @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
+            public Map<String, String> getHeaders() throws AuthFailureError
+            {
                 HashMap<String, String> headers = new HashMap<String, String>();
                 headers.put("Content-Type", "application/json");
 
@@ -200,7 +170,8 @@ public class StatusActivity extends AppCompatActivity {
 
                 if (authExpiration != null && !authExpiration.isEmpty() &&
                         authToken != null && !authToken.isEmpty() &&
-                        authUserId != null && !authUserId.isEmpty()) {
+                        authUserId != null && !authUserId.isEmpty())
+                {
                     headers.put("AUTH_EXPIRATION", authExpiration);
                     headers.put("AUTH_TOKEN", authToken);
                     headers.put("AUTH_USER_ID", authUserId);
@@ -240,5 +211,21 @@ public class StatusActivity extends AppCompatActivity {
         final Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
         finish(); // prevents back
+    }
+
+    private void showDialog(String message)
+    {
+        // Build a dialog with the given message to show the user
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        builder.setMessage(message)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int id)
+                    {
+                        dialog.dismiss();
+                    }
+                });
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
+        dialog.show();
     }
 }
