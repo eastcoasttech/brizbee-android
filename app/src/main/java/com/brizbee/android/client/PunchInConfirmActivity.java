@@ -93,7 +93,7 @@ public class PunchInConfirmActivity extends AppCompatActivity {
                             job.getString("Name"))
             );
         } catch (JSONException e) {
-            e.printStackTrace();
+            showDialog("Could not display the task you selected, please go back and try again.");
         }
 
         // Allows getting the last known location
@@ -217,7 +217,7 @@ public class PunchInConfirmActivity extends AppCompatActivity {
                 jsonBody.put("LongitudeForInAt", "");
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            showDialog("Could not prepare the request to the server, please try again.");
         }
         JsonObjectRequest jsonRequest = new JsonObjectRequest
                 (Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>() {
@@ -229,36 +229,12 @@ public class PunchInConfirmActivity extends AppCompatActivity {
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        String json = null;
-
                         NetworkResponse response = error.networkResponse;
-                        if(response != null && response.data != null) {
-                            switch(response.statusCode){
-                                case 400:
-//                            json = new String(response.data);
-//                            json = trimMessage(json, "message");
-//                            if(json != null) displayMessage(json);
-                                    break;
-                            }
-                            builder.setMessage(new String(response.data))
-                                    .setTitle(Integer.toString(response.statusCode))
-                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        } else {
-                            builder.setMessage(error.toString())
-                                    .setTitle("Oops")
-                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
+                        switch (response.statusCode)
+                        {
+                            default:
+                                showDialog("Could not reach the server, please try again.");
+                                break;
                         }
                     }
                 }) {
@@ -289,5 +265,21 @@ public class PunchInConfirmActivity extends AppCompatActivity {
 
         // Add the request to the RequestQueue
         MySingleton.getInstance(this).addToRequestQueue(jsonRequest);
+    }
+
+    private void showDialog(String message)
+    {
+        // Build a dialog with the given message to show the user
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        builder.setMessage(message)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int id)
+                    {
+                        dialog.dismiss();
+                    }
+                });
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
+        dialog.show();
     }
 }
