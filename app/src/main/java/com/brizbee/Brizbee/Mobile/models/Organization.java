@@ -1,4 +1,4 @@
-package com.brizbee.android.client.models;
+package com.brizbee.Brizbee.Mobile.models;
 
 import java.util.Date;
 

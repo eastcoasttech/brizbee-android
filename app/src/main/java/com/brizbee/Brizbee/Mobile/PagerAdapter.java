@@ -1,4 +1,4 @@
-package com.brizbee.android.client;
+package com.brizbee.Brizbee.Mobile;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;

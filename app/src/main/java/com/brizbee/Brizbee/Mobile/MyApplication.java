@@ -1,12 +1,10 @@
-package com.brizbee.android.client;
+package com.brizbee.Brizbee.Mobile;
 
 import android.app.Application;
 
-import com.brizbee.android.client.models.Organization;
-import com.brizbee.android.client.models.TimeZone;
-import com.brizbee.android.client.models.User;
-
-import org.json.JSONObject;
+import com.brizbee.Brizbee.Mobile.models.Organization;
+import com.brizbee.Brizbee.Mobile.models.TimeZone;
+import com.brizbee.Brizbee.Mobile.models.User;
 
 public class MyApplication extends Application {
     private String authExpiration;

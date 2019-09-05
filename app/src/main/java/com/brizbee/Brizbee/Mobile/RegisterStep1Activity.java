@@ -1,4 +1,4 @@
-package com.brizbee.android.client;
+package com.brizbee.Brizbee.Mobile;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;

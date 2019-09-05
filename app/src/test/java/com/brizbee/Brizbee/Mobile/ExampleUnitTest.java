@@ -1,4 +1,4 @@
-package com.brizbee.android.client;
+package com.brizbee.Brizbee.Mobile;
 
 import org.junit.Test;
 

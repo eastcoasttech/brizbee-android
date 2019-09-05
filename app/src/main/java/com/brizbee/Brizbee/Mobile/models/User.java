@@ -1,6 +1,5 @@
-package com.brizbee.android.client.models;
+package com.brizbee.Brizbee.Mobile.models;
 
-import java.time.LocalTime;
 import java.util.Date;
 
 public class User {

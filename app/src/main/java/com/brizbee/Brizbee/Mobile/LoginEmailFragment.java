@@ -1,7 +1,6 @@
-package com.brizbee.android.client;
+package com.brizbee.Brizbee.Mobile;
 
 import android.app.Activity;
-import android.app.Application;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
@@ -23,9 +21,9 @@ import com.android.volley.Response;
 import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.brizbee.android.client.models.Organization;
-import com.brizbee.android.client.models.TimeZone;
-import com.brizbee.android.client.models.User;
+import com.brizbee.Brizbee.Mobile.models.Organization;
+import com.brizbee.Brizbee.Mobile.models.TimeZone;
+import com.brizbee.Brizbee.Mobile.models.User;
 
 import org.json.JSONArray;
 import org.json.JSONException;

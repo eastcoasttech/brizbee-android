@@ -1,4 +1,4 @@
-package com.brizbee.android.client;
+package com.brizbee.Brizbee.Mobile;
 
 import android.app.Activity;
 import android.content.DialogInterface;
@@ -21,9 +21,9 @@ import com.android.volley.Response;
 import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.brizbee.android.client.models.Organization;
-import com.brizbee.android.client.models.TimeZone;
-import com.brizbee.android.client.models.User;
+import com.brizbee.Brizbee.Mobile.models.Organization;
+import com.brizbee.Brizbee.Mobile.models.TimeZone;
+import com.brizbee.Brizbee.Mobile.models.User;
 
 import org.json.JSONArray;
 import org.json.JSONException;
