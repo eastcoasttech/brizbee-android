@@ -137,58 +137,47 @@ public class PunchInConfirmActivity extends AppCompatActivity {
 
     public void onContinueClick(View view) {
         try {
-//            // Recording current location is optional
-//            User user = ((MyApplication) getApplication()).getUser();
-//            if (user.getRequiresLocation()) {
-//                getCurrentLocation();
-////            fusedLocationClient.getLastLocation()
-////                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-////                    @Override
-////                    public void onSuccess(Location location) {
-////                        // Got last known location. In some rare situations this can be null.
-////                        if (location != null) {
-////                            currentLongitude = location.getLongitude();
-////                            currentLatitude = location.getLatitude();
-////                            save();
-////                        }
-////                    }
-////                });
-//            } else {
-//                save();
-//            }
+            // Recording current location is optional
+            User user = ((MyApplication) getApplication()).getUser();
+            if (user.getRequiresLocation()) {
+                LocationRequest locationRequest = LocationRequest.create();
+                locationRequest.setInterval(10000);
+                locationRequest.setFastestInterval(5000);
+                locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-            save();
+                locationCallback = new LocationCallback() {
+                    @Override
+                    public void onLocationResult(LocationResult locationResult) {
+                        if (locationResult != null) {
+                            Location location = locationResult.getLocations().get(0);
+
+                            // Get the coordinates of the location
+                            currentLatitude = location.getLatitude();
+                            currentLongitude = location.getLongitude();
+
+                            // Stop getting location updates
+                            fusedLocationClient.removeLocationUpdates(locationCallback);
+
+                            // Save with the location
+                            save();
+                        } else {
+                            // Save without the location
+                            save();
+                        }
+                    };
+                };
+
+                fusedLocationClient.requestLocationUpdates(locationRequest,
+                        locationCallback,
+                        null /* Looper */);
+            } else {
+                // Save because user is not required to have location
+                save();
+            }
         }
         catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public void getCurrentLocation(){
-        LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(5000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-        fusedLocationClient.requestLocationUpdates(locationRequest,
-                locationCallback,
-                null /* Looper */);
-
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult != null) {
-                    for (Location location : locationResult.getLocations()) {
-                        // Get the coordinates of the location
-                        currentLatitude = location.getLatitude();
-                        currentLongitude = location.getLongitude();
-                        save();
-                    }
-                } else {
-                    save();
-                }
-            };
-        };
     }
 
     public void save() {
@@ -205,8 +194,8 @@ public class PunchInConfirmActivity extends AppCompatActivity {
             jsonBody.put("InAtTimeZone", selectedTimeZone);
 
             if (currentLatitude != 0.0 && currentLatitude != 0.0) {
-                jsonBody.put("LatitudeForInAt", currentLatitude);
-                jsonBody.put("LongitudeForInAt", currentLongitude);
+                jsonBody.put("LatitudeForInAt", String.valueOf(currentLatitude));
+                jsonBody.put("LongitudeForInAt", String.valueOf(currentLongitude));
             } else {
                 jsonBody.put("LatitudeForInAt", "");
                 jsonBody.put("LongitudeForInAt", "");

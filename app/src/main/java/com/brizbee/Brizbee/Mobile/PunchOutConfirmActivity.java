@@ -3,6 +3,7 @@ package com.brizbee.Brizbee.Mobile;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -21,6 +22,11 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.brizbee.Brizbee.Mobile.models.TimeZone;
 import com.brizbee.Brizbee.Mobile.models.User;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,9 +35,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PunchOutConfirmActivity extends AppCompatActivity {
+    double currentLatitude = 0.0;
+    double currentLongitude = 0.0;
+    private LocationCallback locationCallback;
     private Spinner spinnerTimeZone;
     private String[] timezonesIds;
     private String selectedTimeZone;
+
+    private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +51,9 @@ public class PunchOutConfirmActivity extends AppCompatActivity {
 
         // Get references from layouts
         spinnerTimeZone = findViewById(R.id.spinnerTimeZone);
+
+        // Allows getting the last known location
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         // Get timezones from application and configure spinner
         TimeZone[] timezones = ((MyApplication) getApplication()).getTimeZones();
@@ -83,7 +97,48 @@ public class PunchOutConfirmActivity extends AppCompatActivity {
     }
 
     public void onContinueClick(View view) {
-        save();
+        try {
+            // Recording current location is optional
+            User user = ((MyApplication) getApplication()).getUser();
+            if (user.getRequiresLocation()) {
+                LocationRequest locationRequest = LocationRequest.create();
+                locationRequest.setInterval(10000);
+                locationRequest.setFastestInterval(5000);
+                locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+                locationCallback = new LocationCallback() {
+                    @Override
+                    public void onLocationResult(LocationResult locationResult) {
+                        if (locationResult != null) {
+                            Location location = locationResult.getLocations().get(0);
+
+                            // Get the coordinates of the location
+                            currentLatitude = location.getLatitude();
+                            currentLongitude = location.getLongitude();
+
+                            // Stop getting location updates
+                            fusedLocationClient.removeLocationUpdates(locationCallback);
+
+                            // Save with the location
+                            save();
+                        } else {
+                            // Save without the location
+                            save();
+                        }
+                    };
+                };
+
+                fusedLocationClient.requestLocationUpdates(locationRequest,
+                        locationCallback,
+                        null /* Looper */);
+            } else {
+                // Save because user is not required to have location
+                save();
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void save() {
@@ -98,6 +153,14 @@ public class PunchOutConfirmActivity extends AppCompatActivity {
         try {
             jsonBody.put("SourceForOutAt", "Mobile");
             jsonBody.put("OutAtTimeZone", selectedTimeZone);
+
+            if (currentLatitude != 0.0 && currentLatitude != 0.0) {
+                jsonBody.put("LatitudeForOutAt", String.valueOf(currentLatitude));
+                jsonBody.put("LongitudeForOutAt", String.valueOf(currentLongitude));
+            } else {
+                jsonBody.put("LatitudeForOutAt", "");
+                jsonBody.put("LongitudeForOutAt", "");
+            }
         } catch (JSONException e) {
             showDialog("Could not prepare the request to the server, please try again.");
         }
