@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -151,8 +152,12 @@ public class PunchOutConfirmActivity extends AppCompatActivity {
         // Request a string response from the provided URL
         JSONObject jsonBody = new JSONObject();
         try {
-            jsonBody.put("SourceForOutAt", "Mobile");
+            jsonBody.put("SourceHardware", "Mobile");
             jsonBody.put("OutAtTimeZone", selectedTimeZone);
+            jsonBody.put("SourceOperatingSystem", "Android");
+            jsonBody.put("SourceOperatingSystemVersion", Build.VERSION.RELEASE);
+            jsonBody.put("SourceBrowser", "N/A");
+            jsonBody.put("SourceBrowserVersion", "N/A");
 
             if (currentLatitude != 0.0 && currentLatitude != 0.0) {
                 jsonBody.put("LatitudeForOutAt", String.valueOf(currentLatitude));

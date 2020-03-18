@@ -28,6 +28,8 @@
         </activity>
         <activity android:name=".PunchOutConfirmActivity">
         </activity>
+        <activity android:name=".ManualEntryActivity">
+        </activity>
         <activity android:name=".RegisterStep1Activity">
         </activity>
     </application>

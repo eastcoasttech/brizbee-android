@@ -204,6 +204,11 @@ public class StatusActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    public void onManualEntryClick(View view) {
+        final Intent intent = new Intent(this, ManualEntryActivity.class);
+        startActivity(intent);
+    }
+
     public void logout(View view) {
         final Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);

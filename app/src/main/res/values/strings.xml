@@ -4,6 +4,7 @@
     <string name="logout_name">Log out</string>
     <string name="punch_in_name">Punch In</string>
     <string name="punch_out_name">Punch Out</string>
+    <string name="manual_entry_name">Manual Entry</string>
     <string name="continue_name">Continue</string>
     <string name="cancel_name">Cancel</string>
     <string name="text_customer_header">for customer</string>
