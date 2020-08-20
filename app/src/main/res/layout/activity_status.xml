@@ -26,6 +26,7 @@
             android:text="@string/punch_in_name"
             android:textAllCaps="true"
             android:textColor="@color/colorWhite"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textTimeZone" />
@@ -40,7 +41,7 @@
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
             android:background="@drawable/custom_button_secondary"
-
+            android:visibility="gone"
             android:onClick="onManualEntryClick"
             android:text="@string/manual_entry_name"
             android:textAllCaps="true"
@@ -62,6 +63,7 @@
             android:text="@string/punch_out_name"
             android:textAllCaps="true"
             android:textColor="@color/colorWhite"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/buttonPunchIn" />
@@ -80,6 +82,7 @@
             android:onClick="logout"
             android:text="@string/logout_name"
             android:textAllCaps="true"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -96,6 +99,7 @@
             android:layout_marginRight="24dp"
             android:text="Hello, Joshua Shane Martin"
             android:textSize="16sp"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -112,6 +116,7 @@
             android:text="You are PUNCHED IN"
             android:textSize="20sp"
             android:textStyle="bold"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textHello" />
@@ -128,6 +133,7 @@
             android:text="@string/text_job_header"
             android:textSize="13sp"
             android:textStyle="italic"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textStatus" />
@@ -144,6 +150,7 @@
             android:textColor="@color/colorGreenDark"
             android:textSize="15sp"
             android:textStyle="bold"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textJobHeader" />
@@ -160,6 +167,7 @@
             android:text="@string/text_customer_header"
             android:textSize="13sp"
             android:textStyle="italic"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textJob" />
@@ -176,6 +184,7 @@
             android:textColor="@color/colorGreenDark"
             android:textSize="15sp"
             android:textStyle="bold"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textCustomerHeader" />
@@ -193,6 +202,7 @@
             android:text="@string/text_task_header"
             android:textSize="13sp"
             android:textStyle="italic"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textCustomer" />
@@ -209,6 +219,7 @@
             android:textColor="@color/colorGreenDark"
             android:textSize="15sp"
             android:textStyle="bold"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textTaskHeader" />
@@ -225,6 +236,7 @@
             android:text="since"
             android:textSize="13sp"
             android:textStyle="italic"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textTask" />
@@ -240,6 +252,7 @@
             android:text="SINCE"
             android:textSize="14sp"
             android:textStyle="bold"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textSinceHeader" />
@@ -255,6 +268,7 @@
             android:text="TIME ZONE"
             android:textSize="14sp"
             android:textStyle="bold"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textSince" />

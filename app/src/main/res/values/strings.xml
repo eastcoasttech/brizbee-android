@@ -4,7 +4,7 @@
     <string name="logout_name">Log out</string>
     <string name="punch_in_name">Punch In</string>
     <string name="punch_out_name">Punch Out</string>
-    <string name="manual_entry_name">Manual Entry</string>
+    <string name="manual_entry_name">Time Card</string>
     <string name="continue_name">Continue</string>
     <string name="cancel_name">Cancel</string>
     <string name="text_customer_header">for customer</string>
@@ -12,7 +12,18 @@
     <string name="text_task_header">doing task</string>
     <string name="task_number_name">Enter Your Task Number</string>
     <string name="scan_task_number_name">Scan Barcode</string>
-    <string name="copyright_notice">Copyright © 2019 East Coast Technology Services LLC</string>
+    <string name="copyright_notice">Copyright © 2020 East Coast Technology Services LLC</string>
     <string name="marketing_line_1">Don\'t have an account yet?</string>
     <string name="marketing_line_2">Start Tracking Time for Free</string>
+
+
+    <string name="activity_manual_entry_title">New Time Card</string>
+    <string name="activity_manual_entry_date_title">Date</string>
+    <string name="activity_manual_entry_hours_title">Hours</string>
+    <string name="activity_manual_entry_minutes_title">Minutes</string>
+    <string name="activity_manual_entry_customer_title">Customer</string>
+    <string name="activity_manual_entry_job_title">Job</string>
+    <string name="activity_manual_entry_task_title">Task</string>
+    <string name="activity_manual_entry_hint_zero">0</string>
+    <string name="activity_manual_entry_hint_date_zero">0000-00-00</string>
 </resources>

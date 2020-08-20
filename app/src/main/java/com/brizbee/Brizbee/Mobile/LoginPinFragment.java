@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -79,82 +80,88 @@ public class LoginPinFragment extends Fragment
         String organizationCode = editOrganizationCode.getText().toString();
         String userPin = editUserPin.getText().toString();
         String url ="https://brizbee.gowitheast.com/odata/Users/Default.Authenticate";
+        MySingleton singleton = MySingleton.getInstance(this.getActivity());
 
-        // Request a string response from the provided URL
-        JSONObject jsonBody = new JSONObject();
-        try
-        {
-            JSONObject session = new JSONObject();
-            session.put("PinOrganizationCode", organizationCode);
-            session.put("PinUserPin", userPin);
-            session.put("Method", "pin");
-            jsonBody.put("Session", session);
-        }
-        catch (JSONException e)
-        {
-            showDialog("Could not prepare the request to the server, please try again.");
-        }
-        JsonObjectRequest jsonRequest = new JsonObjectRequest
-                (Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>()
+        new Thread() {
+            @Override
+            public void run() {
+                // Request a string response from the provided URL
+                JSONObject jsonBody = new JSONObject();
+                try
                 {
-                    @Override
-                    public void onResponse(JSONObject response)
-                    {
-                        try
-                        {
-                            String authUserId = response.getString("AuthUserId");
-                            String authToken = response.getString("AuthToken");
-                            String authExpiration = response.getString("AuthExpiration");
-
-                            // Set application variables
-                            application.setAuthExpiration(authExpiration);
-                            application.setAuthToken(authToken);
-                            application.setAuthUserId(authUserId);
-
-                            // Load metadata
-                            getTimeZones();
-                            getUserAndOrganization(Integer.parseInt(authUserId));
-                        }
-                        catch (JSONException e)
-                        {
-                            showDialog("Could not understand the response from the server, please try again.");
-                            setEnabled(true); // Enable the form
-                        }
-                    }
-                },
-                        new Response.ErrorListener()
+                    JSONObject session = new JSONObject();
+                    session.put("PinOrganizationCode", organizationCode);
+                    session.put("PinUserPin", userPin);
+                    session.put("Method", "pin");
+                    jsonBody.put("Session", session);
+                }
+                catch (JSONException e)
                 {
-                    @Override
-                    public void onErrorResponse(VolleyError error)
-                    {
-                        NetworkResponse response = error.networkResponse;
-                        if (response != null && response.data != null)
+                    showDialog("Could not prepare the request to the server, please try again.");
+                }
+                JsonObjectRequest jsonRequest = new JsonObjectRequest
+                        (Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>()
                         {
-                            switch (response.statusCode)
+                            @Override
+                            public void onResponse(JSONObject response)
                             {
-                                case 400:
-                                    showDialog("Not a valid organization code and PIN number, please try again.");
-                                    break;
-                                default:
-                                    showDialog("Could not reach the server, please try again.");
-                                    break;
+                                try
+                                {
+                                    String authUserId = response.getString("AuthUserId");
+                                    String authToken = response.getString("AuthToken");
+                                    String authExpiration = response.getString("AuthExpiration");
+
+                                    // Set application variables
+                                    application.setAuthExpiration(authExpiration);
+                                    application.setAuthToken(authToken);
+                                    application.setAuthUserId(authUserId);
+
+                                    // Load metadata
+                                    getTimeZones();
+                                    getUserAndOrganization(Integer.parseInt(authUserId));
+                                }
+                                catch (JSONException e)
+                                {
+                                    showDialog("Could not understand the response from the server, please try again.");
+                                    setEnabled(true); // Enable the form
+                                }
                             }
-                            setEnabled(true); // Enable the form
-                        }
-                        else
-                        {
-                            showDialog("Could not reach the server, please try again.");
-                            setEnabled(true); // Enable the form
-                        }
-                    }
-                });
+                        },
+                                new Response.ErrorListener()
+                                {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error)
+                                    {
+                                        NetworkResponse response = error.networkResponse;
+                                        if (response != null && response.data != null)
+                                        {
+                                            switch (response.statusCode)
+                                            {
+                                                case 400:
+                                                    showDialog("Not a valid organization code and PIN number, please try again.");
+                                                    break;
+                                                default:
+                                                    showDialog("Could not reach the server, please try again.");
+                                                    break;
+                                            }
+                                            setEnabled(true); // Enable the form
+                                        }
+                                        else
+                                        {
+                                            showDialog("Could not reach the server, please try again.");
+                                            setEnabled(true); // Enable the form
+                                        }
+                                    }
+                                });
 
-        int socketTimeout = 10000;
-        RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
-        jsonRequest.setRetryPolicy(policy);
+                int socketTimeout = 10000;
+                RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
+                jsonRequest.setRetryPolicy(policy);
 
-        // Add the request to the RequestQueue
-        MySingleton.getInstance(this.getActivity()).addToRequestQueue(jsonRequest);
+                // Add the request to the RequestQueue
+                singleton.addToRequestQueue(jsonRequest);
+            }
+        }.start();
     }
 
     public HashMap<String, String> getAuthHeaders()
@@ -277,8 +284,11 @@ public class LoginPinFragment extends Fragment
                             application.setUser(user);
                             application.setOrganization(organization);
 
-                            startActivity(intent);
-                            activity.finish(); // prevents going back
+                            // Must run on the UI thread
+                            getActivity().runOnUiThread(() -> {
+                                startActivity(intent);
+                                activity.finish(); // prevents going back
+                            });
                         } catch (JSONException e)
                         {
                             showDialog("Could not understand the response from the server, please try again.");

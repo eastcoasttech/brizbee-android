@@ -5,25 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#ffffff"
-    tools:context=".PunchInConfirmActivity">
+    tools:context=".TimeCardActivity"
+    android:label="@string/activity_manual_entry_title">
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <TextView
-            android:id="@+id/textManualEntryTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginLeft="24dp"
-            android:layout_marginTop="32dp"
-            android:layout_marginEnd="24dp"
-            android:layout_marginRight="24dp"
-            android:text="New Manual Entry"
-            android:textSize="22sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="wrap_content">
 
         <TextView
             android:id="@+id/textMDateHeader"
@@ -31,14 +17,14 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginLeft="24dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="32dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
-            android:text="Date"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textManualEntryTitle" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:text="@string/activity_manual_entry_date_title" />
 
         <EditText
             android:id="@+id/editDate"
@@ -49,68 +35,107 @@
             android:layout_marginTop="4dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
+            android:hint="@string/activity_manual_entry_hint_date_zero"
+            android:importantForAutofill="no"
             android:inputType="date"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textMDateHeader" />
 
-        <TextView
-            android:id="@+id/textMHoursHeader"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginLeft="24dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="24dp"
-            android:layout_marginRight="24dp"
-            android:text="Hours"
-            android:textSize="18sp"
+        <LinearLayout
+            android:id="@+id/layoutHoursMinutes"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editDate" />
+            app:layout_constraintTop_toBottomOf="@+id/editDate">
 
-        <EditText
-            android:id="@+id/editHours"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginLeft="24dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="24dp"
-            android:layout_marginRight="24dp"
-            android:inputType="number"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textMHoursHeader" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight=".5"
+                android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/textMMinutesHeader"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginLeft="24dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="24dp"
-            android:layout_marginRight="24dp"
-            android:text="Minutes"
-            android:textSize="18sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editHours" />
+                <TextView
+                    android:id="@+id/textHoursHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginLeft="24dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="24dp"
+                    android:layout_marginRight="24dp"
+                    android:textSize="18sp"
+                    android:text="@string/activity_manual_entry_hours_title" />
 
-        <EditText
-            android:id="@+id/editMinutes"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginLeft="24dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="24dp"
-            android:layout_marginRight="24dp"
-            android:inputType="number"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textMMinutesHeader"  />
+                <Spinner
+                    android:id="@+id/spinnerHours"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginLeft="24dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="24dp"
+                    android:layout_marginRight="24dp" />
+
+<!--                <EditText-->
+<!--                    android:id="@+id/editHours"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_marginStart="24dp"-->
+<!--                    android:layout_marginLeft="24dp"-->
+<!--                    android:layout_marginTop="4dp"-->
+<!--                    android:layout_marginEnd="24dp"-->
+<!--                    android:layout_marginRight="24dp"-->
+<!--                    android:hint="@string/activity_manual_entry_hint_zero"-->
+<!--                    android:inputType="number"-->
+<!--                    android:importantForAutofill="no"/>-->
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight=".5"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textMinutesHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginLeft="24dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="24dp"
+                    android:layout_marginRight="24dp"
+                    android:textSize="18sp"
+                    android:text="@string/activity_manual_entry_minutes_title" />
+
+                <Spinner
+                    android:id="@+id/spinnerMinutes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginLeft="24dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="24dp"
+                    android:layout_marginRight="24dp" />
+
+<!--                <EditText-->
+<!--                    android:id="@+id/editMinutes"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_marginStart="24dp"-->
+<!--                    android:layout_marginLeft="24dp"-->
+<!--                    android:layout_marginTop="4dp"-->
+<!--                    android:layout_marginEnd="24dp"-->
+<!--                    android:layout_marginRight="24dp"-->
+<!--                    android:hint="@string/activity_manual_entry_hint_zero"-->
+<!--                    android:inputType="number"-->
+<!--                    android:importantForAutofill="no"/>-->
+            </LinearLayout>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/textMCustomerHeader"
@@ -121,11 +146,11 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
-            android:text="Customer"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editMinutes" />
+            app:layout_constraintTop_toBottomOf="@+id/layoutHoursMinutes"
+            android:text="@string/activity_manual_entry_customer_title" />
 
         <Spinner
             android:id="@+id/spinnerMCustomer"
@@ -149,11 +174,11 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
-            android:text="Job"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/spinnerMCustomer" />
+            app:layout_constraintTop_toBottomOf="@+id/spinnerMCustomer"
+            android:text="@string/activity_manual_entry_job_title" />
 
         <Spinner
             android:id="@+id/spinnerMJob"
@@ -177,11 +202,11 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
-            android:text="Task"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/spinnerMJob" />
+            app:layout_constraintTop_toBottomOf="@+id/spinnerMJob"
+            android:text="@string/activity_manual_entry_task_title" />
 
         <Spinner
             android:id="@+id/spinnerMTask"

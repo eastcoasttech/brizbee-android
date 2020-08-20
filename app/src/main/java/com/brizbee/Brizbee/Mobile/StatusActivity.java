@@ -44,6 +44,9 @@ public class StatusActivity extends AppCompatActivity {
     private TextView textSinceHeader;
     private TextView textTimeZone;
     private Button buttonPunchOut;
+    private Button buttonPunchIn;
+    private Button buttonLogout;
+    private Button buttonManualEntry;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +66,9 @@ public class StatusActivity extends AppCompatActivity {
         textSinceHeader = findViewById(R.id.textSinceHeader);
         textTimeZone = findViewById(R.id.textTimeZone);
         buttonPunchOut = findViewById(R.id.buttonPunchOut);
+        buttonPunchIn = findViewById(R.id.buttonPunchIn);
+        buttonLogout = findViewById(R.id.buttonLogout);
+        buttonManualEntry = findViewById(R.id.buttonManualEntry);
 
         loadUser();
         loadStatus();
@@ -92,6 +98,8 @@ public class StatusActivity extends AppCompatActivity {
                             // Set color and text of status
                             textStatus.setTextColor(getResources().getColor(R.color.colorGreenDark));
                             textStatus.setText("You are PUNCHED IN");
+                            textStatus.setVisibility(View.VISIBLE);
+                            textHello.setVisibility(View.VISIBLE);
 
                             // Task Number and Name
                             textTask.setText(
@@ -99,6 +107,8 @@ public class StatusActivity extends AppCompatActivity {
                                             task.getString("Number"),
                                             task.getString("Name"))
                             );
+                            textTaskHeader.setVisibility(View.VISIBLE);
+                            textTask.setVisibility(View.VISIBLE);
 
                             // Customer Number and Name
                             textCustomer.setText(
@@ -106,6 +116,8 @@ public class StatusActivity extends AppCompatActivity {
                                             customer.getString("Number"),
                                             customer.getString("Name"))
                             );
+                            textCustomerHeader.setVisibility(View.VISIBLE);
+                            textCustomer.setVisibility(View.VISIBLE);
 
                             // Job Number and Name
                             textJob.setText(
@@ -113,26 +125,33 @@ public class StatusActivity extends AppCompatActivity {
                                             job.getString("Number"),
                                             job.getString("Name"))
                             );
+                            textJobHeader.setVisibility(View.VISIBLE);
+                            textJob.setVisibility(View.VISIBLE);
 
                             // Format the since timestamp
                             Date since = dfServer.parse(first.getString("InAt"));
                             textSince.setText(dfHuman.format(since));
                             textTimeZone.setText(first.getString("InAtTimeZone"));
+                            textSinceHeader.setVisibility(View.VISIBLE);
+                            textSince.setVisibility(View.VISIBLE);
+                            textTimeZone.setVisibility(View.VISIBLE);
+
+                            // Set visibility of buttons
+                            buttonPunchIn.setVisibility(View.VISIBLE);
+                            buttonPunchOut.setVisibility(View.VISIBLE);
+                            buttonLogout.setVisibility(View.VISIBLE);
+                            buttonManualEntry.setVisibility(View.VISIBLE);
                         } else {
                             // Set color and text of status
                             textStatus.setTextColor(getResources().getColor(R.color.colorRed));
                             textStatus.setText("You are PUNCHED OUT");
+                            textStatus.setVisibility(View.VISIBLE);
+                            textHello.setVisibility(View.VISIBLE);
 
-                            textCustomer.setVisibility(View.GONE);
-                            textCustomerHeader.setVisibility(View.GONE);
-                            textJob.setVisibility(View.GONE);
-                            textJobHeader.setVisibility(View.GONE);
-                            textTask.setVisibility(View.GONE);
-                            textTaskHeader.setVisibility(View.GONE);
-                            textSince.setVisibility(View.GONE);
-                            textSinceHeader.setVisibility(View.GONE);
-                            textTimeZone.setVisibility(View.GONE);
-                            buttonPunchOut.setVisibility(View.GONE);
+                            // Set visibility of buttons
+                            buttonPunchIn.setVisibility(View.VISIBLE);
+                            buttonLogout.setVisibility(View.VISIBLE);
+                            buttonManualEntry.setVisibility(View.VISIBLE);
                         }
                     } catch (JSONException e) {
                         showDialog("Could not understand the response from the server, please try again.");
@@ -205,7 +224,7 @@ public class StatusActivity extends AppCompatActivity {
     }
 
     public void onManualEntryClick(View view) {
-        final Intent intent = new Intent(this, ManualEntryActivity.class);
+        final Intent intent = new Intent(this, TimeCardActivity.class);
         startActivity(intent);
     }
 

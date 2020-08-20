@@ -1,11 +1,14 @@
 package com.brizbee.Brizbee.Mobile;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -13,6 +16,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
@@ -37,6 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PunchInConfirmActivity extends AppCompatActivity {
+    private static final String TAG = "PunchInConfirmActivity";
     double currentLatitude = 0.0;
     double currentLongitude = 0.0;
     private TextView textConfirmTask;
@@ -102,22 +107,25 @@ public class PunchInConfirmActivity extends AppCompatActivity {
             timezonesIds[i] = timezones[i].getId();
         }
 
-        ArrayAdapter<String> adapter= new ArrayAdapter<String>(this,
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item, timezonesIds);
-
         spinnerTimeZone.setAdapter(adapter);
 
         spinnerTimeZone.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view,
                                        int position, long id) {
+                Log.i(TAG, "An item has been selected at position:");
+                Log.i(TAG, String.valueOf(position));
+
                 // Store selected item
-                int sid= spinnerTimeZone.getSelectedItemPosition();
+                int sid = spinnerTimeZone.getSelectedItemPosition();
                 selectedTimeZone = timezonesIds[sid];
             }
+
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // TODO Auto-generated method stub
+                // Do nothing
             }
         });
 
@@ -165,8 +173,21 @@ public class PunchInConfirmActivity extends AppCompatActivity {
                             // Save without the location
                             save();
                         }
-                    };
+                    }
+
+                    ;
                 };
+
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
 
                 fusedLocationClient.requestLocationUpdates(locationRequest,
                         locationCallback,
