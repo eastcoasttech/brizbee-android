@@ -151,7 +151,7 @@ public class IntentIntegrator {
     private String buttonYes;
     private String buttonNo;
     private List<String> targetApplications;
-    private final Map<String,Object> moreExtras = new HashMap<>(3);
+    private final Map<String, Object> moreExtras = new HashMap<>(3);
 
     /**
      * @param activity {@link Activity} invoking the integration
@@ -164,8 +164,8 @@ public class IntentIntegrator {
 
     /**
      * @param fragment {@link Fragment} invoking the integration.
-     *  {@link #startActivityForResult(Intent, int)} will be called on the {@link Fragment} instead
-     *  of an {@link Activity}
+     *                 {@link #startActivityForResult(Intent, int)} will be called on the {@link Fragment} instead
+     *                 of an {@link Activity}
      */
     public IntentIntegrator(Fragment fragment) {
         this.activity = fragment.getActivity();
@@ -244,7 +244,7 @@ public class IntentIntegrator {
         this.targetApplications = Collections.singletonList(targetApplication);
     }
 
-    public Map<String,?> getMoreExtras() {
+    public Map<String, ?> getMoreExtras() {
         return moreExtras;
     }
 
@@ -256,7 +256,7 @@ public class IntentIntegrator {
      * Initiates a scan for all known barcode types with the default camera.
      *
      * @return the {@link AlertDialog} that was shown to the user prompting them to download the app
-     *   if a prompt was needed, or null otherwise.
+     * if a prompt was needed, or null otherwise.
      */
     public final AlertDialog initiateScan() {
         return initiateScan(ALL_CODE_TYPES, -1);
@@ -267,7 +267,7 @@ public class IntentIntegrator {
      *
      * @param cameraId camera ID of the camera to use. A negative value means "no preference".
      * @return the {@link AlertDialog} that was shown to the user prompting them to download the app
-     *   if a prompt was needed, or null otherwise.
+     * if a prompt was needed, or null otherwise.
      */
     public final AlertDialog initiateScan(int cameraId) {
         return initiateScan(ALL_CODE_TYPES, cameraId);
@@ -280,7 +280,7 @@ public class IntentIntegrator {
      *
      * @param desiredBarcodeFormats names of {@code BarcodeFormat}s to scan for
      * @return the {@link AlertDialog} that was shown to the user prompting them to download the app
-     *   if a prompt was needed, or null otherwise.
+     * if a prompt was needed, or null otherwise.
      */
     public final AlertDialog initiateScan(Collection<String> desiredBarcodeFormats) {
         return initiateScan(desiredBarcodeFormats, -1);
@@ -292,9 +292,9 @@ public class IntentIntegrator {
      * like {@link #PRODUCT_CODE_TYPES} for example.
      *
      * @param desiredBarcodeFormats names of {@code BarcodeFormat}s to scan for
-     * @param cameraId camera ID of the camera to use. A negative value means "no preference".
+     * @param cameraId              camera ID of the camera to use. A negative value means "no preference".
      * @return the {@link AlertDialog} that was shown to the user prompting them to download the app
-     *   if a prompt was needed, or null otherwise
+     * if a prompt was needed, or null otherwise
      */
     public final AlertDialog initiateScan(Collection<String> desiredBarcodeFormats, int cameraId) {
         Intent intentScan = new Intent(BS_PACKAGE + ".SCAN");
@@ -335,7 +335,7 @@ public class IntentIntegrator {
      * newer versions of Android and for compatibility library.
      *
      * @param intent Intent to start.
-     * @param code Request code for the activity
+     * @param code   Request code for the activity
      * @see Activity#startActivityForResult(Intent, int)
      * @see Fragment#startActivityForResult(Intent, int)
      */
@@ -410,11 +410,11 @@ public class IntentIntegrator {
      * {@link Activity#onActivityResult(int, int, Intent)} method.</p>
      *
      * @param requestCode request code from {@code onActivityResult()}
-     * @param resultCode result code from {@code onActivityResult()}
-     * @param intent {@link Intent} from {@code onActivityResult()}
+     * @param resultCode  result code from {@code onActivityResult()}
+     * @param intent      {@link Intent} from {@code onActivityResult()}
      * @return null if the event handled here was not related to this class, or
-     *  else an {@link IntentResult} containing the result of the scan. If the user cancelled scanning,
-     *  the fields will be null.
+     * else an {@link IntentResult} containing the result of the scan. If the user cancelled scanning,
+     * the fields will be null.
      */
     public static IntentResult parseActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == REQUEST_CODE) {
@@ -442,7 +442,7 @@ public class IntentIntegrator {
      *
      * @param text the text string to encode as a barcode
      * @return the {@link AlertDialog} that was shown to the user prompting them to download the app
-     *   if a prompt was needed, or null otherwise
+     * if a prompt was needed, or null otherwise
      * @see #shareText(CharSequence, CharSequence)
      */
     public final AlertDialog shareText(CharSequence text) {
@@ -456,7 +456,7 @@ public class IntentIntegrator {
      * @param text the text string to encode as a barcode
      * @param type type of data to encode. See {@code com.google.zxing.client.android.Contents.Type} constants.
      * @return the {@link AlertDialog} that was shown to the user prompting them to download the app
-     *   if a prompt was needed, or null otherwise
+     * if a prompt was needed, or null otherwise
      */
     public final AlertDialog shareText(CharSequence text, CharSequence type) {
         Intent intent = new Intent();
@@ -485,7 +485,7 @@ public class IntentIntegrator {
     }
 
     private void attachMoreExtras(Intent intent) {
-        for (Map.Entry<String,Object> entry : moreExtras.entrySet()) {
+        for (Map.Entry<String, Object> entry : moreExtras.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
             // Kind of hacky

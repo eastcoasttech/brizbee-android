@@ -20,20 +20,20 @@ public class MySingleton {
         requestQueue = getRequestQueue();
 
         imageLoader = new ImageLoader(requestQueue,
-            new ImageLoader.ImageCache() {
-                private final LruCache<String, Bitmap>
-                        cache = new LruCache<String, Bitmap>(20);
+                new ImageLoader.ImageCache() {
+                    private final LruCache<String, Bitmap>
+                            cache = new LruCache<String, Bitmap>(20);
 
-                @Override
-                public Bitmap getBitmap(String url) {
-                    return cache.get(url);
-                }
+                    @Override
+                    public Bitmap getBitmap(String url) {
+                        return cache.get(url);
+                    }
 
-                @Override
-                public void putBitmap(String url, Bitmap bitmap) {
-                    cache.put(url, bitmap);
-                }
-            });
+                    @Override
+                    public void putBitmap(String url, Bitmap bitmap) {
+                        cache.put(url, bitmap);
+                    }
+                });
     }
 
     public static synchronized MySingleton getInstance(Context context) {

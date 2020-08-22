@@ -63,7 +63,7 @@ public class PunchOutConfirmActivity extends AppCompatActivity {
             timezonesIds[i] = timezones[i].getId();
         }
 
-        ArrayAdapter<String> adapter= new ArrayAdapter<String>(this,
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_dropdown_item, timezonesIds);
 
         spinnerTimeZone.setAdapter(adapter);
@@ -73,9 +73,10 @@ public class PunchOutConfirmActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view,
                                        int position, long id) {
                 // Store selected item
-                int sid= spinnerTimeZone.getSelectedItemPosition();
+                int sid = spinnerTimeZone.getSelectedItemPosition();
                 selectedTimeZone = timezonesIds[sid];
             }
+
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 // TODO Auto-generated method stub
@@ -126,7 +127,9 @@ public class PunchOutConfirmActivity extends AppCompatActivity {
                             // Save without the location
                             save();
                         }
-                    };
+                    }
+
+                    ;
                 };
 
                 fusedLocationClient.requestLocationUpdates(locationRequest,
@@ -136,8 +139,7 @@ public class PunchOutConfirmActivity extends AppCompatActivity {
                 // Save because user is not required to have location
                 save();
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -180,8 +182,7 @@ public class PunchOutConfirmActivity extends AppCompatActivity {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         NetworkResponse response = error.networkResponse;
-                        switch (response.statusCode)
-                        {
+                        switch (response.statusCode) {
                             default:
                                 showDialog("Could not reach the server, please try again.");
                                 break;
@@ -217,15 +218,12 @@ public class PunchOutConfirmActivity extends AppCompatActivity {
         MySingleton.getInstance(this).addToRequestQueue(jsonRequest);
     }
 
-    private void showDialog(String message)
-    {
+    private void showDialog(String message) {
         // Build a dialog with the given message to show the user
         androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
         builder.setMessage(message)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener()
-                {
-                    public void onClick(DialogInterface dialog, int id)
-                    {
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
                         dialog.dismiss();
                     }
                 });

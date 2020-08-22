@@ -15,7 +15,8 @@
     <string name="copyright_notice">Copyright © 2020 East Coast Technology Services LLC</string>
     <string name="marketing_line_1">Don\'t have an account yet?</string>
     <string name="marketing_line_2">Start Tracking Time for Free</string>
-
+    <string name="status_punched_in">You are PUNCHED IN</string>
+    <string name="status_punched_out">You are PUNCHED OUT</string>
 
     <string name="activity_manual_entry_title">New Time Card</string>
     <string name="activity_manual_entry_date_title">Date</string>

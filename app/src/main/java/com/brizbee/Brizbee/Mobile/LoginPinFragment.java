@@ -10,9 +10,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.transition.Visibility;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
@@ -37,16 +39,15 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class LoginPinFragment extends Fragment
-{
+public class LoginPinFragment extends Fragment {
     private MyApplication application;
     private EditText editOrganizationCode;
     private EditText editUserPin;
     private Button button;
+    private ProgressBar progressBar;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
-    {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         application = ((MyApplication) this.getActivity().getApplication());
 
         View view = inflater.inflate(R.layout.login_pin_fragment, container, false);
@@ -55,13 +56,12 @@ public class LoginPinFragment extends Fragment
         editOrganizationCode = view.findViewById(R.id.editOrganizationCode);
         editUserPin = view.findViewById(R.id.editUserPin);
         button = view.findViewById(R.id.buttonLogin);
+        progressBar = view.findViewById(R.id.login_pin_fragment_progress);
 
         // Set the click listener
-        button.setOnClickListener(new View.OnClickListener()
-        {
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
+            public void onClick(View v) {
                 onLoginClick(v);
             }
         });
@@ -73,99 +73,82 @@ public class LoginPinFragment extends Fragment
         return view;
     }
 
-    public void onLoginClick(View view)
-    {
+    public void onLoginClick(View view) {
         setEnabled(false); // Disable the form
+        progressBar.setVisibility(View.VISIBLE);
 
         String organizationCode = editOrganizationCode.getText().toString();
         String userPin = editUserPin.getText().toString();
-        String url ="https://brizbee.gowitheast.com/odata/Users/Default.Authenticate";
-        MySingleton singleton = MySingleton.getInstance(this.getActivity());
+        String url = "https://brizbee.gowitheast.com/odata/Users/Default.Authenticate";
 
-        new Thread() {
-            @Override
-            public void run() {
-                // Request a string response from the provided URL
-                JSONObject jsonBody = new JSONObject();
-                try
-                {
-                    JSONObject session = new JSONObject();
-                    session.put("PinOrganizationCode", organizationCode);
-                    session.put("PinUserPin", userPin);
-                    session.put("Method", "pin");
-                    jsonBody.put("Session", session);
-                }
-                catch (JSONException e)
-                {
-                    showDialog("Could not prepare the request to the server, please try again.");
-                }
-                JsonObjectRequest jsonRequest = new JsonObjectRequest
-                        (Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>()
-                        {
+        // Request a string response from the provided URL
+        JSONObject jsonBody = new JSONObject();
+        try {
+            JSONObject session = new JSONObject();
+            session.put("PinOrganizationCode", organizationCode);
+            session.put("PinUserPin", userPin);
+            session.put("Method", "pin");
+            jsonBody.put("Session", session);
+        } catch (JSONException e) {
+            progressBar.setVisibility(View.INVISIBLE);
+            showDialog("Could not prepare the request to the server, please try again.");
+        }
+        JsonObjectRequest jsonRequest = new JsonObjectRequest
+                (Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            String authUserId = response.getString("AuthUserId");
+                            String authToken = response.getString("AuthToken");
+                            String authExpiration = response.getString("AuthExpiration");
+
+                            // Set application variables
+                            application.setAuthExpiration(authExpiration);
+                            application.setAuthToken(authToken);
+                            application.setAuthUserId(authUserId);
+
+                            // Load metadata
+                            getTimeZones();
+                            getUserAndOrganization(Integer.parseInt(authUserId));
+                        } catch (JSONException e) {
+                            showDialog("Could not understand the response from the server, please try again.");
+                        } finally {
+                            progressBar.setVisibility(View.INVISIBLE);
+                            setEnabled(true); // Enable the form
+                        }
+                    }
+                },
+                        new Response.ErrorListener() {
                             @Override
-                            public void onResponse(JSONObject response)
-                            {
-                                try
-                                {
-                                    String authUserId = response.getString("AuthUserId");
-                                    String authToken = response.getString("AuthToken");
-                                    String authExpiration = response.getString("AuthExpiration");
-
-                                    // Set application variables
-                                    application.setAuthExpiration(authExpiration);
-                                    application.setAuthToken(authToken);
-                                    application.setAuthUserId(authUserId);
-
-                                    // Load metadata
-                                    getTimeZones();
-                                    getUserAndOrganization(Integer.parseInt(authUserId));
-                                }
-                                catch (JSONException e)
-                                {
-                                    showDialog("Could not understand the response from the server, please try again.");
-                                    setEnabled(true); // Enable the form
-                                }
-                            }
-                        },
-                                new Response.ErrorListener()
-                                {
-                                    @Override
-                                    public void onErrorResponse(VolleyError error)
-                                    {
-                                        NetworkResponse response = error.networkResponse;
-                                        if (response != null && response.data != null)
-                                        {
-                                            switch (response.statusCode)
-                                            {
-                                                case 400:
-                                                    showDialog("Not a valid organization code and PIN number, please try again.");
-                                                    break;
-                                                default:
-                                                    showDialog("Could not reach the server, please try again.");
-                                                    break;
-                                            }
-                                            setEnabled(true); // Enable the form
-                                        }
-                                        else
-                                        {
+                            public void onErrorResponse(VolleyError error) {
+                                NetworkResponse response = error.networkResponse;
+                                if (response != null && response.data != null) {
+                                    switch (response.statusCode) {
+                                        case 400:
+                                            showDialog("Not a valid organization code and PIN number, please try again.");
+                                            break;
+                                        default:
                                             showDialog("Could not reach the server, please try again.");
-                                            setEnabled(true); // Enable the form
-                                        }
+                                            break;
                                     }
-                                });
+                                } else {
+                                    showDialog("Could not reach the server, please try again.");
+                                }
 
-                int socketTimeout = 10000;
-                RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
-                jsonRequest.setRetryPolicy(policy);
+                                progressBar.setVisibility(View.INVISIBLE);
+                                setEnabled(true); // Enable the form
+                            }
+                        });
 
-                // Add the request to the RequestQueue
-                singleton.addToRequestQueue(jsonRequest);
-            }
-        }.start();
+        int socketTimeout = 10000;
+        RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
+        jsonRequest.setRetryPolicy(policy);
+
+        // Add the request to the RequestQueue
+        MySingleton.getInstance(this.getActivity()).addToRequestQueue(jsonRequest);
     }
 
-    public HashMap<String, String> getAuthHeaders()
-    {
+    public HashMap<String, String> getAuthHeaders() {
         HashMap<String, String> headers = new HashMap<String, String>();
         headers.put("Content-Type", "application/json");
 
@@ -175,8 +158,7 @@ public class LoginPinFragment extends Fragment
 
         if (authExpiration != null && !authExpiration.isEmpty() &&
                 authToken != null && !authToken.isEmpty() &&
-                authUserId != null && !authUserId.isEmpty())
-        {
+                authUserId != null && !authUserId.isEmpty()) {
             headers.put("AUTH_EXPIRATION", authExpiration);
             headers.put("AUTH_TOKEN", authToken);
             headers.put("AUTH_USER_ID", authUserId);
@@ -185,22 +167,17 @@ public class LoginPinFragment extends Fragment
         return headers;
     }
 
-    public void getTimeZones()
-    {
+    public void getTimeZones() {
         String url = "https://brizbee.gowitheast.com/odata/Organizations/Default.Timezones";
 
         JsonObjectRequest jsonRequest = new JsonObjectRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONObject>()
-                {
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                     @Override
-                    public void onResponse(JSONObject response)
-                    {
-                        try
-                        {
+                    public void onResponse(JSONObject response) {
+                        try {
                             JSONArray value = response.getJSONArray("value");
                             TimeZone[] timezones = new TimeZone[value.length()];
-                            for(int i = 0; i < value.length(); i++)
-                            {
+                            for (int i = 0; i < value.length(); i++) {
                                 TimeZone zone = new TimeZone();
                                 zone.setCountryCode(value.getJSONObject(i).getString("CountryCode"));
                                 zone.setId(value.getJSONObject(i).getString("Id"));
@@ -209,32 +186,29 @@ public class LoginPinFragment extends Fragment
 
                             // Store user in application variable
                             application.setTimeZones(timezones);
-                        } catch (JSONException e)
-                        {
+                        } catch (JSONException e) {
                             showDialog("Could not understand the response from the server, please try again.");
+                        } finally {
+                            progressBar.setVisibility(View.INVISIBLE);
                             setEnabled(true); // Enable the form
                         }
                     }
                 },
-                        new Response.ErrorListener()
-                        {
+                        new Response.ErrorListener() {
                             @Override
-                            public void onErrorResponse(VolleyError error)
-                            {
+                            public void onErrorResponse(VolleyError error) {
                                 NetworkResponse response = error.networkResponse;
-                                switch (response.statusCode)
-                                {
+                                switch (response.statusCode) {
                                     default:
                                         showDialog("Could not reach the server, please try again.");
                                         break;
                                 }
+                                progressBar.setVisibility(View.INVISIBLE);
                                 setEnabled(true); // Enable the form
                             }
-                        })
-        {
+                        }) {
             @Override
-            public Map<String, String> getHeaders() throws AuthFailureError
-            {
+            public Map<String, String> getHeaders() throws AuthFailureError {
                 return getAuthHeaders();
             }
         };
@@ -247,78 +221,63 @@ public class LoginPinFragment extends Fragment
         MySingleton.getInstance(this.getActivity()).addToRequestQueue(jsonRequest);
     }
 
-    public void getUserAndOrganization(int userId)
-    {
+    public void getUserAndOrganization(int userId) {
         final Activity activity = this.getActivity();
         final Intent intent = new Intent(activity, StatusActivity.class);
 
         String url = String.format("https://brizbee.gowitheast.com/odata/Users(%d)?$expand=Organization", userId);
 
         JsonObjectRequest jsonRequest = new JsonObjectRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONObject>()
-                {
-                    @Override
-                    public void onResponse(JSONObject response)
-                    {
-                        try
-                        {
-                            // Format for parsing timestamps from server
-                            DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.ENGLISH);
+                (Request.Method.GET, url, null, response -> {
+                    try {
+                        // Format for parsing timestamps from server
+                        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.ENGLISH);
 
-                            JSONObject userJson = response;
-                            User user = new User();
-                            user.setCreatedAt(df.parse(userJson.getString("CreatedAt")));
-                            user.setEmailAddress(userJson.getString("EmailAddress"));
-                            user.setId(userJson.getInt("Id"));
-                            user.setName(userJson.getString("Name"));
-                            user.setRequiresLocation(userJson.getBoolean("RequiresLocation"));
-                            user.setTimeZone(userJson.getString("TimeZone"));
+                        JSONObject userJson = response;
+                        User user = new User();
+                        user.setCreatedAt(df.parse(userJson.getString("CreatedAt")));
+                        user.setEmailAddress(userJson.getString("EmailAddress"));
+                        user.setId(userJson.getInt("Id"));
+                        user.setName(userJson.getString("Name"));
+                        user.setRequiresLocation(userJson.getBoolean("RequiresLocation"));
+                        user.setTimeZone(userJson.getString("TimeZone"));
 
-                            JSONObject organizationJson = response.getJSONObject("Organization");
-                            Organization organization = new Organization();
-                            organization.setCreatedAt(df.parse(organizationJson.getString("CreatedAt")));
-                            organization.setId(organizationJson.getInt("Id"));
-                            organization.setName(organizationJson.getString("Name"));
+                        JSONObject organizationJson = response.getJSONObject("Organization");
+                        Organization organization = new Organization();
+                        organization.setCreatedAt(df.parse(organizationJson.getString("CreatedAt")));
+                        organization.setId(organizationJson.getInt("Id"));
+                        organization.setName(organizationJson.getString("Name"));
 
-                            // Store user in application variable
-                            application.setUser(user);
-                            application.setOrganization(organization);
+                        // Store user in application variable
+                        application.setUser(user);
+                        application.setOrganization(organization);
 
-                            // Must run on the UI thread
-                            getActivity().runOnUiThread(() -> {
-                                startActivity(intent);
-                                activity.finish(); // prevents going back
-                            });
-                        } catch (JSONException e)
-                        {
-                            showDialog("Could not understand the response from the server, please try again.");
-                            setEnabled(true); // Enable the form
-                        } catch (ParseException e)
-                        {
-                            showDialog("Could not understand the response from the server, please try again.");
-                            setEnabled(true); // Enable the form
-                        }
+                        startActivity(intent);
+                        activity.finish(); // prevents going back
+                    } catch (JSONException e) {
+                        showDialog("Could not understand the response from the server, please try again.");
+                        setEnabled(true); // Enable the form
+                    } catch (ParseException e) {
+                        showDialog("Could not understand the response from the server, please try again.");
+                    } finally {
+                        progressBar.setVisibility(View.INVISIBLE);
+                        setEnabled(true); // Enable the form
                     }
                 },
-                        new Response.ErrorListener()
-                        {
+                        new Response.ErrorListener() {
                             @Override
-                            public void onErrorResponse(VolleyError error)
-                            {
+                            public void onErrorResponse(VolleyError error) {
                                 NetworkResponse response = error.networkResponse;
-                                switch (response.statusCode)
-                                {
+                                switch (response.statusCode) {
                                     default:
                                         showDialog("Could not reach the server, please try again.");
                                         break;
                                 }
                                 setEnabled(true); // Enable the form
                             }
-                        })
-        {
+                        }) {
             @Override
-            public Map<String, String> getHeaders() throws AuthFailureError
-            {
+            public Map<String, String> getHeaders() throws AuthFailureError {
                 return getAuthHeaders();
             }
         };
@@ -331,22 +290,18 @@ public class LoginPinFragment extends Fragment
         MySingleton.getInstance(this.getActivity()).addToRequestQueue(jsonRequest);
     }
 
-    public void setEnabled(boolean enabled)
-    {
+    public void setEnabled(boolean enabled) {
         editOrganizationCode.setEnabled(enabled);
         editUserPin.setEnabled(enabled);
         button.setEnabled(enabled);
     }
 
-    private void showDialog(String message)
-    {
+    private void showDialog(String message) {
         // Build a dialog with the given message to show the user
         AlertDialog.Builder builder = new AlertDialog.Builder(this.getActivity());
         builder.setMessage(message)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener()
-                {
-                    public void onClick(DialogInterface dialog, int id)
-                    {
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
                         dialog.dismiss();
                     }
                 });

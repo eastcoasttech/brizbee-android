@@ -79,13 +79,24 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/editUserPin" />
 
+        <ProgressBar
+            android:id="@+id/login_pin_fragment_progress"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/buttonLogin"
+            android:visibility="invisible" />
+
         <TextView
             android:id="@+id/textMarketingLine1"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginStart="24dp"
             android:layout_marginLeft="24dp"
-            android:layout_marginTop="40dp"
+            android:layout_marginTop="20dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
             android:gravity="center"
@@ -93,7 +104,7 @@
             android:textColor="@color/colorBrandGrayDark"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/buttonLogin" />
+            app:layout_constraintTop_toBottomOf="@id/login_pin_fragment_progress" />
 
         <TextView
             android:id="@+id/textMarketingLine2"
@@ -114,23 +125,6 @@
             app:layout_constraintTop_toBottomOf="@id/textMarketingLine1"
             app:lineHeight="24dp" />
 
-        <Button
-            android:id="@+id/buttonRegister"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginLeft="24dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="24dp"
-            android:layout_marginRight="24dp"
-            android:background="@drawable/custom_button_secondary"
-            android:text="@string/marketing_line_2"
-            android:textAllCaps="true"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textMarketingLine2" />
-
         <TextView
             android:id="@+id/textCopyright"
             android:layout_width="match_parent"
@@ -148,7 +142,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/buttonRegister" />
+            app:layout_constraintTop_toBottomOf="@id/textMarketingLine2" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

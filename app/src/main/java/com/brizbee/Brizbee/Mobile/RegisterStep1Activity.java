@@ -40,7 +40,7 @@ public class RegisterStep1Activity extends AppCompatActivity {
         editUserName = findViewById(R.id.editRegisterUserName);
         editUserEmail = findViewById(R.id.editRegisterUserEmail);
         editUserPassword = findViewById(R.id.editRegisterUserPassword);
-        if(editUserName.requestFocus()) {
+        if (editUserName.requestFocus()) {
             getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
     }
@@ -98,8 +98,8 @@ public class RegisterStep1Activity extends AppCompatActivity {
                         String json = null;
 
                         NetworkResponse response = error.networkResponse;
-                        if(response != null && response.data != null) {
-                            switch(response.statusCode){
+                        if (response != null && response.data != null) {
+                            switch (response.statusCode) {
                                 case 400:
 //                            json = new String(response.data);
 //                            json = trimMessage(json, "message");

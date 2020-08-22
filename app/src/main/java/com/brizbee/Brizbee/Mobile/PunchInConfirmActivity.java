@@ -196,8 +196,7 @@ public class PunchInConfirmActivity extends AppCompatActivity {
                 // Save because user is not required to have location
                 save();
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -240,8 +239,7 @@ public class PunchInConfirmActivity extends AppCompatActivity {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         NetworkResponse response = error.networkResponse;
-                        switch (response.statusCode)
-                        {
+                        switch (response.statusCode) {
                             default:
                                 showDialog("Could not reach the server, please try again.");
                                 break;
@@ -277,15 +275,12 @@ public class PunchInConfirmActivity extends AppCompatActivity {
         MySingleton.getInstance(this).addToRequestQueue(jsonRequest);
     }
 
-    private void showDialog(String message)
-    {
+    private void showDialog(String message) {
         // Build a dialog with the given message to show the user
         androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
         builder.setMessage(message)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener()
-                {
-                    public void onClick(DialogInterface dialog, int id)
-                    {
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
                         dialog.dismiss();
                     }
                 });
