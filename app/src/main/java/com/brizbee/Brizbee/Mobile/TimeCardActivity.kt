@@ -1,8 +1,11 @@
 package com.brizbee.Brizbee.Mobile
 
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
+import android.util.Log.WARN
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
@@ -22,6 +25,7 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 class TimeCardActivity : AppCompatActivity() {
 
     companion object {
@@ -39,6 +43,7 @@ class TimeCardActivity : AppCompatActivity() {
     private var selectedTask: Task? = null
     private var selectedHour = 0
     private var selectedMinute = 0
+    private var datePicker: DatePickerDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,7 +100,18 @@ class TimeCardActivity : AppCompatActivity() {
         spinnerMinutes!!.adapter = minuteAdapter
 
         // Set the default date to today
-        editDate!!.setText(android.text.format.DateFormat.format("yyyy-MM-dd", Date()))
+        val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        editDate!!.setText(dateFormatter.format(Date().time))
+
+        // Configure date picker
+        val newCalendar = Calendar.getInstance()
+        datePicker = DatePickerDialog(this, { _, year, monthOfYear, dayOfMonth ->
+            val newDate = Calendar.getInstance()
+            newDate[year, monthOfYear] = dayOfMonth
+            editDate!!.setText(dateFormatter.format(newDate.time))
+        }, newCalendar.get(Calendar.YEAR), newCalendar.get(Calendar.MONTH), newCalendar.get(Calendar.DAY_OF_MONTH))
+
+        editDate!!.setOnClickListener { datePicker!!.show() }
 
         // Refresh the customer list
         refreshCustomers()
@@ -112,9 +128,6 @@ class TimeCardActivity : AppCompatActivity() {
 
     fun onContinueClick(view: View?) {
 //        // Take the user to the status activity
-//        final Intent intent = new Intent(this, StatusActivity.class);
-//        startActivity(intent);
-//        finish(); // prevents going back
         save()
     }
 
@@ -129,56 +142,56 @@ class TimeCardActivity : AppCompatActivity() {
         val url = "https://brizbee.gowitheast.com/odata/Customers?\$count=true&\$orderby=Number&\$top=20&\$skip=0"
 
         val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
-            Response.Listener { response: JSONObject ->
-                try {
-                    // Format for parsing timestamps from server
-                    val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'", Locale.ENGLISH)
+                Response.Listener { response: JSONObject ->
+                    try {
+                        // Format for parsing timestamps from server
+                        val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'", Locale.ENGLISH)
 
-                    // Build a customer object for each item in the response
-                    val customers: MutableList<Customer> = ArrayList()
-                    val value = response.getJSONArray("value")
-                    for (i in 0 until value.length()) {
-                        val j = value.getJSONObject(i)
-                        val customer = Customer()
-                        customer.name = j.getString("Name")
-                        customer.number = j.getString("Number")
-                        customer.id = j.getInt("Id")
-                        val createdAt = dfServer.parse(j.getString("CreatedAt"))
-                        customer.createdAt = createdAt
-                        customers.add(customer)
-                    }
-
-                    // Update the list of customers and configure the spinner
-                    val adapter = ArrayAdapter(this,
-                            android.R.layout.simple_spinner_dropdown_item, customers)
-                    spinnerMCustomer!!.adapter = adapter
-                    spinnerMCustomer!!.onItemSelectedListener = object : OnItemSelectedListener {
-                        override fun onItemSelected(parent: AdapterView<*>?, view: View,
-                                                    position: Int, id: Long) {
-                            // Store the selected item
-                            val sid = spinnerMCustomer!!.selectedItemPosition
-                            selectedCustomer = customers[sid]
-                            Log.i(TAG, selectedCustomer!!.name)
-
-                            // Refresh job list
-                            refreshJobs()
+                        // Build a customer object for each item in the response
+                        val customers: MutableList<Customer> = ArrayList()
+                        val value = response.getJSONArray("value")
+                        for (i in 0 until value.length()) {
+                            val j = value.getJSONObject(i)
+                            val customer = Customer()
+                            customer.name = j.getString("Name")
+                            customer.number = j.getString("Number")
+                            customer.id = j.getInt("Id")
+                            val createdAt = dfServer.parse(j.getString("CreatedAt"))
+                            customer.createdAt = createdAt
+                            customers.add(customer)
                         }
 
-                        override fun onNothingSelected(parent: AdapterView<*>?) {
-                            // Do nothing
+                        // Update the list of customers and configure the spinner
+                        val adapter = ArrayAdapter(this,
+                                android.R.layout.simple_spinner_dropdown_item, customers)
+                        spinnerMCustomer!!.adapter = adapter
+                        spinnerMCustomer!!.onItemSelectedListener = object : OnItemSelectedListener {
+                            override fun onItemSelected(parent: AdapterView<*>?, view: View,
+                                                        position: Int, id: Long) {
+                                // Store the selected item
+                                val sid = spinnerMCustomer!!.selectedItemPosition
+                                selectedCustomer = customers[sid]
+                                Log.i(TAG, selectedCustomer!!.name)
+
+                                // Refresh job list
+                                refreshJobs()
+                            }
+
+                            override fun onNothingSelected(parent: AdapterView<*>?) {
+                                // Do nothing
+                            }
                         }
+                    } catch (e: JSONException) {
+                        showDialog("Could not understand the response from the server, please try again.")
+                    } catch (e: ParseException) {
+                        showDialog("Could not understand the response from the server, please try again.")
                     }
-                } catch (e: JSONException) {
-                    showDialog("Could not understand the response from the server, please try again.")
-                } catch (e: ParseException) {
-                    showDialog("Could not understand the response from the server, please try again.")
-                }
-            }, Response.ErrorListener { error: VolleyError ->
-                val response = error.networkResponse
-                when (response.statusCode) {
-                    else -> showDialog("Could not reach the server, please try again.")
-                }
+                }, Response.ErrorListener { error: VolleyError ->
+            val response = error.networkResponse
+            when (response.statusCode) {
+                else -> showDialog("Could not reach the server, please try again.")
             }
+        }
         ) {
             override fun getHeaders(): Map<String, String> {
                 val headers = HashMap<String, String>()
@@ -209,56 +222,56 @@ class TimeCardActivity : AppCompatActivity() {
         val url = "https://brizbee.gowitheast.com/odata/Jobs?\$count=true&\$orderby=Number&\$top=20&\$skip=0&\$filter=CustomerId eq " + selectedCustomer!!.id
 
         val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
-            Response.Listener { response: JSONObject ->
-                try {
-                    // Format for parsing timestamps from server
-                    val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'", Locale.ENGLISH)
+                Response.Listener { response: JSONObject ->
+                    try {
+                        // Format for parsing timestamps from server
+                        val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'", Locale.ENGLISH)
 
-                    // Build a job object for each item in the response
-                    val jobs: MutableList<Job> = ArrayList()
-                    val value = response.getJSONArray("value")
-                    for (i in 0 until value.length()) {
-                        val j = value.getJSONObject(i)
-                        val job = Job()
-                        job.name = j.getString("Name")
-                        job.number = j.getString("Number")
-                        job.id = j.getInt("Id")
-                        val createdAt = dfServer.parse(j.getString("CreatedAt"))
-                        job.createdAt = createdAt
-                        jobs.add(job)
-                    }
-
-                    // Update the list of jobs and configure the spinner
-                    val adapter = ArrayAdapter(this,
-                            android.R.layout.simple_spinner_dropdown_item, jobs)
-                    spinnerMJob!!.adapter = adapter
-                    spinnerMJob!!.onItemSelectedListener = object : OnItemSelectedListener {
-                        override fun onItemSelected(parent: AdapterView<*>?, view: View,
-                                                    position: Int, id: Long) {
-                            // Store the selected item
-                            val sid = spinnerMJob!!.selectedItemPosition
-                            selectedJob = jobs[sid]
-                            Log.i(TAG, selectedJob!!.name)
-
-                            // Refresh task list
-                            refreshTasks()
+                        // Build a job object for each item in the response
+                        val jobs: MutableList<Job> = ArrayList()
+                        val value = response.getJSONArray("value")
+                        for (i in 0 until value.length()) {
+                            val j = value.getJSONObject(i)
+                            val job = Job()
+                            job.name = j.getString("Name")
+                            job.number = j.getString("Number")
+                            job.id = j.getInt("Id")
+                            val createdAt = dfServer.parse(j.getString("CreatedAt"))
+                            job.createdAt = createdAt
+                            jobs.add(job)
                         }
 
-                        override fun onNothingSelected(parent: AdapterView<*>?) {
-                            // Do nothing
+                        // Update the list of jobs and configure the spinner
+                        val adapter = ArrayAdapter(this,
+                                android.R.layout.simple_spinner_dropdown_item, jobs)
+                        spinnerMJob!!.adapter = adapter
+                        spinnerMJob!!.onItemSelectedListener = object : OnItemSelectedListener {
+                            override fun onItemSelected(parent: AdapterView<*>?, view: View,
+                                                        position: Int, id: Long) {
+                                // Store the selected item
+                                val sid = spinnerMJob!!.selectedItemPosition
+                                selectedJob = jobs[sid]
+                                Log.i(TAG, selectedJob!!.name)
+
+                                // Refresh task list
+                                refreshTasks()
+                            }
+
+                            override fun onNothingSelected(parent: AdapterView<*>?) {
+                                // Do nothing
+                            }
                         }
+                    } catch (e: JSONException) {
+                        showDialog("Could not understand the response from the server, please try again.")
+                    } catch (e: ParseException) {
+                        showDialog("Could not understand the response from the server, please try again.")
                     }
-                } catch (e: JSONException) {
-                    showDialog("Could not understand the response from the server, please try again.")
-                } catch (e: ParseException) {
-                    showDialog("Could not understand the response from the server, please try again.")
-                }
-            }, Response.ErrorListener { error: VolleyError ->
-                val response = error.networkResponse
-                when (response.statusCode) {
-                    else -> showDialog("Could not reach the server, please try again.")
-                }
+                }, Response.ErrorListener { error: VolleyError ->
+            val response = error.networkResponse
+            when (response.statusCode) {
+                else -> showDialog("Could not reach the server, please try again.")
             }
+        }
         ) {
             override fun getHeaders(): Map<String, String> {
                 val headers = HashMap<String, String>()
@@ -289,53 +302,53 @@ class TimeCardActivity : AppCompatActivity() {
         val url = "https://brizbee.gowitheast.com/odata/Tasks?\$count=true&\$orderby=Number&\$top=20&\$skip=0&\$filter=JobId eq " + selectedJob!!.id
 
         val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
-            Response.Listener { response: JSONObject ->
-                try {
-                    // Format for parsing timestamps from server
-                    val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'", Locale.ENGLISH)
+                Response.Listener { response: JSONObject ->
+                    try {
+                        // Format for parsing timestamps from server
+                        val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'", Locale.ENGLISH)
 
-                    // Build a task object for each item in the response
-                    val tasks: MutableList<Task> = ArrayList()
-                    val value = response.getJSONArray("value")
-                    for (i in 0 until value.length()) {
-                        val j = value.getJSONObject(i)
-                        val task = Task()
-                        task.name = j.getString("Name")
-                        task.number = j.getString("Number")
-                        task.id = j.getInt("Id")
-                        val createdAt = dfServer.parse(j.getString("CreatedAt"))
-                        task.createdAt = createdAt
-                        tasks.add(task)
-                    }
-
-                    // Update the list of tasks and configure the spinner
-                    val adapter = ArrayAdapter(this,
-                            android.R.layout.simple_spinner_dropdown_item, tasks)
-                    spinnerMTask!!.adapter = adapter
-                    spinnerMTask!!.onItemSelectedListener = object : OnItemSelectedListener {
-                        override fun onItemSelected(parent: AdapterView<*>?, view: View,
-                                                    position: Int, id: Long) {
-                            // Store the selected item
-                            val sid = spinnerMTask!!.selectedItemPosition
-                            selectedTask = tasks[sid]
-                            Log.i(TAG, selectedTask!!.name)
+                        // Build a task object for each item in the response
+                        val tasks: MutableList<Task> = ArrayList()
+                        val value = response.getJSONArray("value")
+                        for (i in 0 until value.length()) {
+                            val j = value.getJSONObject(i)
+                            val task = Task()
+                            task.name = j.getString("Name")
+                            task.number = j.getString("Number")
+                            task.id = j.getInt("Id")
+                            val createdAt = dfServer.parse(j.getString("CreatedAt"))
+                            task.createdAt = createdAt
+                            tasks.add(task)
                         }
 
-                        override fun onNothingSelected(parent: AdapterView<*>?) {
-                            // Do nothing
+                        // Update the list of tasks and configure the spinner
+                        val adapter = ArrayAdapter(this,
+                                android.R.layout.simple_spinner_dropdown_item, tasks)
+                        spinnerMTask!!.adapter = adapter
+                        spinnerMTask!!.onItemSelectedListener = object : OnItemSelectedListener {
+                            override fun onItemSelected(parent: AdapterView<*>?, view: View,
+                                                        position: Int, id: Long) {
+                                // Store the selected item
+                                val sid = spinnerMTask!!.selectedItemPosition
+                                selectedTask = tasks[sid]
+                                Log.i(TAG, selectedTask!!.name)
+                            }
+
+                            override fun onNothingSelected(parent: AdapterView<*>?) {
+                                // Do nothing
+                            }
                         }
+                    } catch (e: JSONException) {
+                        showDialog("Could not understand the response from the server, please try again.")
+                    } catch (e: ParseException) {
+                        showDialog("Could not understand the response from the server, please try again.")
                     }
-                } catch (e: JSONException) {
-                    showDialog("Could not understand the response from the server, please try again.")
-                } catch (e: ParseException) {
-                    showDialog("Could not understand the response from the server, please try again.")
-                }
-            }, Response.ErrorListener { error: VolleyError ->
-                val response = error.networkResponse
-                when (response.statusCode) {
-                    else -> showDialog("Could not reach the server, please try again.")
-                }
+                }, Response.ErrorListener { error: VolleyError ->
+            val response = error.networkResponse
+            when (response.statusCode) {
+                else -> showDialog("Could not reach the server, please try again.")
             }
+        }
         ) {
             override fun getHeaders(): Map<String, String> {
                 val headers = HashMap<String, String>()
@@ -365,16 +378,15 @@ class TimeCardActivity : AppCompatActivity() {
     private fun save() {
         val intent = Intent(this, StatusActivity::class.java)
         val minutes = selectedMinute + selectedHour * 60
-        //        Date date = editDate.get
+        val enteredAt = editDate?.text
 
-        // Instantiate the RequestQueue
-        val url = "https://brizbee.gowitheast.com/odata/TimesheetEntries"
-        // Request a string response from the provided URL
+        val url = "https://brizbee.gowitheast.com/odata/TimesheetEntries/Default.Add"
         val jsonBody = JSONObject()
         try {
             jsonBody.put("TaskId", selectedTask!!.id)
             jsonBody.put("Minutes", minutes)
-            jsonBody.put("EnteredAt", 0)
+            jsonBody.put("EnteredAt", enteredAt)
+            jsonBody.put("Notes", "")
         } catch (e: JSONException) {
             showDialog("Could not prepare the request to the server, please try again.")
         }
@@ -386,7 +398,11 @@ class TimeCardActivity : AppCompatActivity() {
             }, Response.ErrorListener { error ->
                 val response = error.networkResponse
                 when (response.statusCode) {
-                    else -> showDialog("Could not reach the server, please try again.")
+                    else -> {
+                        val content = String(response.data)
+                        Log.w(TAG, content)
+                        showDialog("Could not reach the server, please try again.")
+                    }
                 }
             }
         ) {

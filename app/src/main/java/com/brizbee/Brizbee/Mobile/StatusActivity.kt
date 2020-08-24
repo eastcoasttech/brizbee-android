@@ -66,7 +66,7 @@ class StatusActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        MySingleton.getInstance(this).requestQueue.cancelAll(StatusActivity.TAG)
+        MySingleton.getInstance(this).requestQueue.cancelAll(TAG)
     }
 
     fun onPunchInClick(view: View?) {
