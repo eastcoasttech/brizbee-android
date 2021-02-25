@@ -206,7 +206,7 @@ public class PunchInConfirmActivity extends AppCompatActivity {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         // Instantiate the RequestQueue
-        String url = "https://brizbee.gowitheast.com/odata/Punches/Default.PunchIn";
+        String url = "https://app-brizbee-prod.azurewebsites.net/odata/Punches/Default.PunchIn";
         // Request a string response from the provided URL
         JSONObject jsonBody = new JSONObject();
         try {

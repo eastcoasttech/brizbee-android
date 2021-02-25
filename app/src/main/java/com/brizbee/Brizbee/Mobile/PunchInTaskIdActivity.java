@@ -92,7 +92,7 @@ public class PunchInTaskIdActivity extends AppCompatActivity implements View.OnC
         EditText editTaskNumber = findViewById(R.id.editTaskNumber);
 
         // Instantiate the RequestQueue
-        String url = String.format("https://brizbee.gowitheast.com/odata/Tasks?$expand=Job($expand=Customer)&$filter=Number eq '%s'", editTaskNumber.getText());
+        String url = String.format("https://app-brizbee-prod.azurewebsites.net/odata/Tasks?$expand=Job($expand=Customer)&$filter=Number eq '%s'", editTaskNumber.getText());
 
         JsonObjectRequest jsonRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {

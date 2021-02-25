@@ -57,7 +57,7 @@ class LoginPinFragment : Fragment() {
 
         val organizationCode = editOrganizationCode!!.text.toString()
         val userPin = editUserPin!!.text.toString()
-        val url = "https://brizbee.gowitheast.com/odata/Users/Default.Authenticate"
+        val url = "https://app-brizbee-prod.azurewebsites.net/odata/Users/Default.Authenticate"
 
         // Request a string response from the provided URL
         val jsonBody = JSONObject()
@@ -129,7 +129,7 @@ class LoginPinFragment : Fragment() {
     // Store user in application variable
     private val timeZones: Unit
         get() {
-            val url = "https://brizbee.gowitheast.com/odata/Organizations/Default.Timezones"
+            val url = "https://app-brizbee-prod.azurewebsites.net/odata/Organizations/Default.Timezones"
             val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null, Response.Listener { response ->
                 try {
                     val value = response.getJSONArray("value")
@@ -173,7 +173,7 @@ class LoginPinFragment : Fragment() {
     private fun getUserAndOrganization(userId: Int) {
         val activity: Activity? = this.activity
         val intent = Intent(activity, StatusActivity::class.java)
-        val url = String.format("https://brizbee.gowitheast.com/odata/Users(%d)?\$expand=Organization", userId)
+        val url = String.format("https://app-brizbee-prod.azurewebsites.net/odata/Users(%d)?\$expand=Organization", userId)
         val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null, Response.Listener { response: JSONObject ->
             try {
                 // Format for parsing timestamps from server

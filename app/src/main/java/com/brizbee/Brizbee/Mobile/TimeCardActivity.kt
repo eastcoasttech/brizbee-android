@@ -139,7 +139,7 @@ class TimeCardActivity : AppCompatActivity() {
     }
 
     private fun refreshCustomers() {
-        val url = "https://brizbee.gowitheast.com/odata/Customers?\$count=true&\$orderby=Number&\$top=20&\$skip=0"
+        val url = "https://app-brizbee-prod.azurewebsites.net/odata/Customers?\$count=true&\$orderby=Number&\$top=20&\$skip=0"
 
         val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
                 Response.Listener { response: JSONObject ->
@@ -219,7 +219,7 @@ class TimeCardActivity : AppCompatActivity() {
     }
 
     private fun refreshJobs() {
-        val url = "https://brizbee.gowitheast.com/odata/Jobs?\$count=true&\$orderby=Number&\$top=20&\$skip=0&\$filter=CustomerId eq " + selectedCustomer!!.id
+        val url = "https://app-brizbee-prod.azurewebsites.net/odata/Jobs?\$count=true&\$orderby=Number&\$top=20&\$skip=0&\$filter=CustomerId eq " + selectedCustomer!!.id
 
         val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
                 Response.Listener { response: JSONObject ->
@@ -299,7 +299,7 @@ class TimeCardActivity : AppCompatActivity() {
     }
 
     private fun refreshTasks() {
-        val url = "https://brizbee.gowitheast.com/odata/Tasks?\$count=true&\$orderby=Number&\$top=20&\$skip=0&\$filter=JobId eq " + selectedJob!!.id
+        val url = "https://app-brizbee-prod.azurewebsites.net/odata/Tasks?\$count=true&\$orderby=Number&\$top=20&\$skip=0&\$filter=JobId eq " + selectedJob!!.id
 
         val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
                 Response.Listener { response: JSONObject ->
@@ -380,7 +380,7 @@ class TimeCardActivity : AppCompatActivity() {
         val minutes = selectedMinute + selectedHour * 60
         val enteredAt = editDate?.text
 
-        val url = "https://brizbee.gowitheast.com/odata/TimesheetEntries/Default.Add"
+        val url = "https://app-brizbee-prod.azurewebsites.net/odata/TimesheetEntries/Default.Add"
         val jsonBody = JSONObject()
         try {
             jsonBody.put("TaskId", selectedTask!!.id)

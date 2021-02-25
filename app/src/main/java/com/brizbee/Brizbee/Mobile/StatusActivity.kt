@@ -91,7 +91,7 @@ class StatusActivity : AppCompatActivity() {
     }
 
     private fun loadStatus() {
-        val url = "https://brizbee.gowitheast.com/odata/Punches/Default.Current?\$expand=Task(\$expand=Job(\$expand=Customer))"
+        val url = "https://app-brizbee-prod.azurewebsites.net/odata/Punches/Default.Current?\$expand=Task(\$expand=Job(\$expand=Customer))"
 
         val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
             Response.Listener { response: JSONObject ->
