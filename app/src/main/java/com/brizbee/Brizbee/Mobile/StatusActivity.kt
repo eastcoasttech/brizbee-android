@@ -16,6 +16,7 @@ import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.jvm.Throws
 
 class StatusActivity : AppCompatActivity() {
 
@@ -38,6 +39,7 @@ class StatusActivity : AppCompatActivity() {
     private var buttonPunchIn: Button? = null
     private var buttonLogout: Button? = null
     private var buttonManualEntry: Button? = null
+    private var isTimeCardEnabled: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -145,7 +147,6 @@ class StatusActivity : AppCompatActivity() {
                         buttonPunchIn!!.visibility = View.VISIBLE
                         buttonPunchOut!!.visibility = View.VISIBLE
                         buttonLogout!!.visibility = View.VISIBLE
-                        buttonManualEntry!!.visibility = View.VISIBLE
                     } else {
                         // Set color and text of status
                         textStatus!!.setTextColor(ContextCompat.getColor(baseContext, R.color.colorRed))
@@ -156,8 +157,13 @@ class StatusActivity : AppCompatActivity() {
                         // Set visibility of buttons
                         buttonPunchIn!!.visibility = View.VISIBLE
                         buttonLogout!!.visibility = View.VISIBLE
+                    }
+
+                    if (isTimeCardEnabled)
+                    {
                         buttonManualEntry!!.visibility = View.VISIBLE
                     }
+
                 } catch (e: JSONException) {
                     showDialog("Could not understand the response from the server, please try again.")
                 } catch (e: ParseException) {
@@ -201,6 +207,17 @@ class StatusActivity : AppCompatActivity() {
         val user = (application as MyApplication).user
         if (user != null) {
             textHello!!.text = String.format("Hello, %s", user.name)
+
+            // Logout immediately if the user is not allowed to use mobile app.
+            if (!user.usesMobileClock)
+            {
+                val intent = Intent(this, LoginActivity::class.java)
+                startActivity(intent)
+                finish() // prevents back
+            }
+
+            // Determine if user can enter time cards.
+            isTimeCardEnabled = user.usesTimesheets
         }
     }
 

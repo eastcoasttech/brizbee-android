@@ -185,6 +185,8 @@ class LoginEmailFragment : Fragment() {
                 user.id = response.getInt("Id")
                 user.name = response.getString("Name")
                 user.requiresLocation = response.getBoolean("RequiresLocation")
+                user.usesMobileClock = response.getBoolean("UsesMobileClock")
+                user.usesTimesheets = response.getBoolean("UsesTimesheets")
                 user.timeZone = response.getString("TimeZone")
                 val organizationJson = response.getJSONObject("Organization")
                 val organization = Organization()
@@ -234,8 +236,10 @@ class LoginEmailFragment : Fragment() {
 
         if (enabled) {
             progressBar!!.visibility = View.INVISIBLE
+            buttonLogin!!.visibility = View.VISIBLE
         } else {
             progressBar!!.visibility = View.VISIBLE
+            buttonLogin!!.visibility = View.INVISIBLE
         }
     }
 

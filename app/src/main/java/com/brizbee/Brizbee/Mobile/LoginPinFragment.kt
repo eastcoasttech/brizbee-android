@@ -184,6 +184,8 @@ class LoginPinFragment : Fragment() {
                 user.id = response.getInt("Id")
                 user.name = response.getString("Name")
                 user.requiresLocation = response.getBoolean("RequiresLocation")
+                user.usesMobileClock = response.getBoolean("UsesMobileClock")
+                user.usesTimesheets = response.getBoolean("UsesTimesheets")
                 user.timeZone = response.getString("TimeZone")
                 val organizationJson = response.getJSONObject("Organization")
                 val organization = Organization()
@@ -233,8 +235,10 @@ class LoginPinFragment : Fragment() {
 
         if (enabled) {
             progressBar!!.visibility = View.INVISIBLE
+            button!!.visibility = View.VISIBLE
         } else {
             progressBar!!.visibility = View.VISIBLE
+            button!!.visibility = View.INVISIBLE
         }
     }
 

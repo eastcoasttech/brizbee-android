@@ -9,6 +9,8 @@ public class User {
     private String Name;
     private boolean RequiresLocation;
     private String TimeZone;
+    private boolean UsesMobileClock;
+    private boolean UsesTimesheets;
 
     public Date getCreatedAt() {
         return CreatedAt;
@@ -56,5 +58,21 @@ public class User {
 
     public void setTimeZone(String timeZone) {
         TimeZone = timeZone;
+    }
+
+    public boolean getUsesMobileClock() {
+        return UsesMobileClock;
+    }
+
+    public void setUsesMobileClock(boolean usesMobileClock) {
+        UsesMobileClock = usesMobileClock;
+    }
+
+    public boolean getUsesTimesheets() {
+        return UsesTimesheets;
+    }
+
+    public void setUsesTimesheets(boolean usesTimesheets) {
+        UsesTimesheets = usesTimesheets;
     }
 }
