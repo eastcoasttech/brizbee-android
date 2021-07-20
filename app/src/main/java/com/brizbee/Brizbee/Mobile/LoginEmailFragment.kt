@@ -22,9 +22,9 @@ import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.concurrent.thread
 
 class LoginEmailFragment : Fragment() {
-
     private var application: MyApplication? = null
     private var editEmailAddress: EditText? = null
     private var editPassword: EditText? = null
@@ -32,7 +32,7 @@ class LoginEmailFragment : Fragment() {
     private var progressBar: ProgressBar? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        application = this.activity!!.application as MyApplication
+        application = requireActivity().application as MyApplication
         val view = inflater.inflate(R.layout.login_email_fragment, container, false)
 
         // Get references from layouts
@@ -42,11 +42,11 @@ class LoginEmailFragment : Fragment() {
         progressBar = view.findViewById(R.id.login_email_fragment_progress)
 
         // Set the click listener
-        buttonLogin!!.setOnClickListener { v -> onLoginClick(v) }
+        buttonLogin?.setOnClickListener { v -> onLoginClick(v) }
 
         // Focus on the email address
-        editEmailAddress!!.clearFocus()
-        editEmailAddress!!.requestFocus()
+        editEmailAddress?.clearFocus()
+        editEmailAddress?.requestFocus()
 
         return view
     }
@@ -57,6 +57,12 @@ class LoginEmailFragment : Fragment() {
     }
 
     private fun onLoginClick(view: View?) {
+        thread(start = true) {
+            login()
+        }
+    }
+
+    private fun login() {
         setEnabled(false) // Disable the form
 
         val emailAddress = editEmailAddress!!.text.toString()
@@ -230,25 +236,29 @@ class LoginEmailFragment : Fragment() {
     }
 
     fun setEnabled(enabled: Boolean) {
-        editEmailAddress!!.isEnabled = enabled
-        editPassword!!.isEnabled = enabled
-        buttonLogin!!.isEnabled = enabled
+        activity?.runOnUiThread {
+            editEmailAddress!!.isEnabled = enabled
+            editPassword!!.isEnabled = enabled
+            buttonLogin!!.isEnabled = enabled
 
-        if (enabled) {
-            progressBar!!.visibility = View.INVISIBLE
-            buttonLogin!!.visibility = View.VISIBLE
-        } else {
-            progressBar!!.visibility = View.VISIBLE
-            buttonLogin!!.visibility = View.INVISIBLE
+            if (enabled) {
+                progressBar!!.visibility = View.INVISIBLE
+                buttonLogin!!.visibility = View.VISIBLE
+            } else {
+                progressBar!!.visibility = View.VISIBLE
+                buttonLogin!!.visibility = View.INVISIBLE
+            }
         }
     }
 
     private fun showDialog(message: String) {
-        // Build a dialog with the given message to show the user
-        val builder = AlertDialog.Builder(this.activity!!)
-        builder.setMessage(message)
-                .setPositiveButton("OK") { dialog, id -> dialog.dismiss() }
-        val dialog = builder.create()
-        dialog.show()
+        activity?.runOnUiThread {
+            // Build a dialog with the given message to show the user
+            val builder = AlertDialog.Builder(requireActivity())
+            builder.setMessage(message)
+                .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+            val dialog = builder.create()
+            dialog.show()
+        }
     }
 }

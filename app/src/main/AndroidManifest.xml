@@ -8,11 +8,13 @@
     <application
         android:name=".MyApplication"
         android:allowBackup="true"
+        android:fullBackupContent="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:hardwareAccelerated="true">
         <activity android:name=".LoginActivity" android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,6 +31,12 @@
         <activity android:name=".PunchOutConfirmActivity">
         </activity>
         <activity android:name=".TimeCardActivity">
+        </activity>
+        <activity android:name=".InventoryItemActivity">
+        </activity>
+        <activity android:name=".InventoryQuantityActivity">
+        </activity>
+        <activity android:name=".InventoryConfirmActivity">
         </activity>
         <activity android:name=".RegisterStep1Activity">
         </activity>

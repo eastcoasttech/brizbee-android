@@ -436,7 +436,7 @@ class TimeCardActivity : AppCompatActivity() {
         // Build a dialog with the given message to show the user
         val builder = androidx.appcompat.app.AlertDialog.Builder(this)
         builder.setMessage(message)
-                .setPositiveButton("OK") { dialog, id -> dialog.dismiss() }
+                .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
         val dialog = builder.create()
         dialog.show()
     }

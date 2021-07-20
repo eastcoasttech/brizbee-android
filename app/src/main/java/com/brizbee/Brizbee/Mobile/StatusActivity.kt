@@ -39,6 +39,7 @@ class StatusActivity : AppCompatActivity() {
     private var buttonPunchIn: Button? = null
     private var buttonLogout: Button? = null
     private var buttonManualEntry: Button? = null
+    private var buttonInventory: Button? = null
     private var isTimeCardEnabled: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,6 +62,7 @@ class StatusActivity : AppCompatActivity() {
         buttonPunchIn = findViewById(R.id.buttonPunchIn)
         buttonLogout = findViewById(R.id.buttonLogout)
         buttonManualEntry = findViewById(R.id.buttonManualEntry)
+        buttonInventory = findViewById(R.id.buttonInventory)
 
         loadUser()
         loadStatus()
@@ -83,6 +85,11 @@ class StatusActivity : AppCompatActivity() {
 
     fun onManualEntryClick(view: View?) {
         val intent = Intent(this, TimeCardActivity::class.java)
+        startActivity(intent)
+    }
+
+    fun onInventoryClick(view: View?) {
+        val intent = Intent(this, InventoryItemActivity::class.java)
         startActivity(intent)
     }
 
@@ -137,7 +144,7 @@ class StatusActivity : AppCompatActivity() {
 
                         // Format the since timestamp
                         val since = dfServer.parse(first.getString("InAt"))
-                        textSince!!.text = dfHuman.format(since)
+                        textSince!!.text = dfHuman.format(since!!)
                         textTimeZone!!.text = first.getString("InAtTimeZone")
                         textSinceHeader!!.visibility = View.VISIBLE
                         textSince!!.visibility = View.VISIBLE
@@ -146,6 +153,7 @@ class StatusActivity : AppCompatActivity() {
                         // Set visibility of buttons
                         buttonPunchIn!!.visibility = View.VISIBLE
                         buttonPunchOut!!.visibility = View.VISIBLE
+                        buttonInventory!!.visibility = View.VISIBLE
                         buttonLogout!!.visibility = View.VISIBLE
                     } else {
                         // Set color and text of status
@@ -156,6 +164,7 @@ class StatusActivity : AppCompatActivity() {
 
                         // Set visibility of buttons
                         buttonPunchIn!!.visibility = View.VISIBLE
+                        buttonInventory!!.visibility = View.VISIBLE
                         buttonLogout!!.visibility = View.VISIBLE
                     }
 
@@ -225,7 +234,7 @@ class StatusActivity : AppCompatActivity() {
         // Build a dialog with the given message to show the user
         val builder = AlertDialog.Builder(this)
         builder.setMessage(message)
-                .setPositiveButton("OK") { dialog, id -> dialog.dismiss() }
+                .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
         val dialog = builder.create()
         dialog.show()
     }

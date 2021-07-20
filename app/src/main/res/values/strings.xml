@@ -1,22 +1,28 @@
 <resources>
     <string name="app_name">BRIZBEE</string>
+
     <string name="login_name">Login</string>
     <string name="logout_name">Log out</string>
     <string name="punch_in_name">Punch In</string>
     <string name="punch_out_name">Punch Out</string>
     <string name="manual_entry_name">Time Card</string>
+    <string name="inventory_name">Inventory</string>
     <string name="continue_name">Continue</string>
+    <string name="save_continue_name">Save and Continue</string>
+    <string name="another_name">Save and Another</string>
     <string name="cancel_name">Cancel</string>
     <string name="text_customer_header">for customer</string>
     <string name="text_job_header">on job</string>
     <string name="text_task_header">doing task</string>
     <string name="task_number_name">Enter Your Task Number</string>
     <string name="scan_task_number_name">Scan Barcode</string>
+    <string name="status_punched_in">You are PUNCHED IN</string>
+    <string name="status_punched_out">You are PUNCHED OUT</string>
+
     <string name="copyright_notice">Copyright © 2021 East Coast Technology Services LLC</string>
     <string name="marketing_line_1">Don\'t have an account yet?</string>
     <string name="marketing_line_2">Start Tracking Time for Free</string>
-    <string name="status_punched_in">You are PUNCHED IN</string>
-    <string name="status_punched_out">You are PUNCHED OUT</string>
+    <string name="marketing_line_3">Start Tracking Time for FREE at BRIZBEE.com</string>
 
     <string name="activity_manual_entry_title">New Time Card</string>
     <string name="activity_manual_entry_date_title">Date</string>
@@ -26,5 +32,9 @@
     <string name="activity_manual_entry_job_title">Job</string>
     <string name="activity_manual_entry_task_title">Task</string>
     <string name="activity_manual_entry_hint_zero">0</string>
-    <string name="activity_manual_entry_hint_date_zero">0000-00-00</string>
+    <string name="activity_manual_entry_hint_date_zero">0000–00–00</string>
+
+    <string name="activity_inventory_item_bar_code_value_name">Enter Bar Code Value</string>
+
+    <string name="activity_inventory_quantity_quantity_name">Enter Quantity</string>
 </resources>

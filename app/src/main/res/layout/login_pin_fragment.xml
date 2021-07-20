@@ -9,7 +9,7 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:background="#ffffff">
 
         <ImageView
@@ -38,6 +38,7 @@
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
             android:ems="10"
+            android:autofillHints=""
             android:hint="Organization Code"
             android:inputType="numberPassword"
             android:singleLine="true"
@@ -55,6 +56,7 @@
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
             android:ems="10"
+            android:autofillHints=""
             android:hint="PIN"
             android:inputType="numberPassword"
             android:singleLine="true"
@@ -116,7 +118,7 @@
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
             android:gravity="center"
-            android:text="Start Tracking Time for FREE at BRIZBEE.com"
+            android:text="@string/marketing_line_3"
             android:textColor="@color/colorBrandGrayDark"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -137,7 +139,7 @@
             android:layout_marginBottom="32dp"
             android:gravity="center"
             android:text="@string/copyright_notice"
-            android:textSize="11sp"
+            android:textSize="12sp"
             android:textColor="@color/colorBrandGray"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
