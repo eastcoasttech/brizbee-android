@@ -6,11 +6,24 @@
     android:layout_height="match_parent"
     android:background="#ffffff"
     tools:context=".InventoryConfirmActivity">
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#ffffff">
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/textInventoryConfirmTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginLeft="24dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginRight="24dp"
+            android:text="@string/activity_inventory_confirm_title"
+            android:textSize="22sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/textInventoryConfirmQuantity"
@@ -18,15 +31,16 @@
             android:layout_height="match_parent"
             android:layout_marginStart="24dp"
             android:layout_marginLeft="24dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="18dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
             android:gravity="center"
             android:textColor="@color/colorBrandGrayDark"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textInventoryConfirmTitle"
             app:lineHeight="24dp" />
 
         <TextView
@@ -35,7 +49,7 @@
             android:layout_height="match_parent"
             android:layout_marginStart="24dp"
             android:layout_marginLeft="24dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="18dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
             android:gravity="center"
@@ -53,7 +67,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginLeft="24dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="18dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
             android:background="@drawable/custom_button_primary"

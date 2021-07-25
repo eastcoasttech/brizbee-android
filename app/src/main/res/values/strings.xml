@@ -37,4 +37,12 @@
     <string name="activity_inventory_item_bar_code_value_name">Enter Bar Code Value</string>
 
     <string name="activity_inventory_quantity_quantity_name">Enter Quantity</string>
+
+    <string name="activity_inventory_confirm_title">Confirm Inventory</string>
+
+    <string name="activity_punch_in_confirm_title">Do you want to PUNCH IN?</string>
+    <string name="activity_punch_in_confirm_time_zone">Time Zone</string>
+
+    <string name="activity_punch_out_confirm_title">Do you want to PUNCH OUT?</string>
+    <string name="activity_punch_out_confirm_time_zone">Time Zone</string>
 </resources>

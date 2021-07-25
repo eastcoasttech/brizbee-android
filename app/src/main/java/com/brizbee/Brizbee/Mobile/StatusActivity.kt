@@ -73,26 +73,31 @@ class StatusActivity : AppCompatActivity() {
         MySingleton.getInstance(this).requestQueue.cancelAll(TAG)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onPunchInClick(view: View?) {
         val intent = Intent(this, PunchInTaskIdActivity::class.java)
         startActivity(intent)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onPunchOutClick(view: View?) {
         val intent = Intent(this, PunchOutConfirmActivity::class.java)
         startActivity(intent)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onManualEntryClick(view: View?) {
         val intent = Intent(this, TimeCardActivity::class.java)
         startActivity(intent)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onInventoryClick(view: View?) {
         val intent = Intent(this, InventoryItemActivity::class.java)
         startActivity(intent)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun logout(view: View?) {
         val intent = Intent(this, LoginActivity::class.java)
         startActivity(intent)
@@ -164,7 +169,7 @@ class StatusActivity : AppCompatActivity() {
 
                         // Set visibility of buttons
                         buttonPunchIn!!.visibility = View.VISIBLE
-                        buttonInventory!!.visibility = View.VISIBLE
+                        buttonInventory!!.visibility = View.GONE
                         buttonLogout!!.visibility = View.VISIBLE
                     }
 

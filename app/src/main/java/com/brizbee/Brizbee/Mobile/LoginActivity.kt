@@ -52,7 +52,7 @@ class LoginActivity : AppCompatActivity() {
         viewPager.adapter = adapter
         viewPager.addOnPageChangeListener(TabLayoutOnPageChangeListener(tabLayout))
 
-        tabLayout.setOnTabSelectedListener(object : OnTabSelectedListener {
+        tabLayout.addOnTabSelectedListener(object : OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
                 viewPager.currentItem = tab.position
             }
@@ -63,6 +63,8 @@ class LoginActivity : AppCompatActivity() {
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
         when (requestCode) {
             MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
 

@@ -8,7 +8,7 @@
     tools:context=".PunchOutConfirmActivity">
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <TextView
             android:id="@+id/textConfirmOutTitle"
@@ -19,7 +19,7 @@
             android:layout_marginTop="32dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
-            android:text="Do you want to PUNCH OUT?"
+            android:text="@string/activity_punch_out_confirm_title"
             android:textSize="22sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -34,8 +34,8 @@
             android:layout_marginTop="32dp"
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
-            android:text="Time Zone"
-            android:textSize="18dp"
+            android:text="@string/activity_punch_out_confirm_time_zone"
+            android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textConfirmOutTitle" />

@@ -28,7 +28,7 @@ class InventoryItemActivity : AppCompatActivity() {
 
         // Get references from layouts
         buttonScan = findViewById(R.id.buttonScan)
-        editBarCodeValue = findViewById<EditText>(R.id.editBarCodeValue)
+        editBarCodeValue = findViewById(R.id.editBarCodeValue)
 
         // Respond to button click
         buttonScan?.setOnClickListener { view ->
@@ -78,12 +78,14 @@ class InventoryItemActivity : AppCompatActivity() {
         MySingleton.getInstance(this).requestQueue.cancelAll(TAG)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onCancelClick(view: View?) {
         val intent = Intent(this, StatusActivity::class.java)
         startActivity(intent)
         finish() // Prevents going back
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onContinueClick(view: View?) {
         thread(start = true) {
             confirm()

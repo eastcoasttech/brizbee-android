@@ -126,11 +126,12 @@ class TimeCardActivity : AppCompatActivity() {
         MySingleton.getInstance(this).requestQueue.cancelAll(TAG)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onContinueClick(view: View?) {
-//        // Take the user to the status activity
         save()
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onCancelClick(view: View?) {
         // Take the user to the status activity
         val intent = Intent(this, StatusActivity::class.java)

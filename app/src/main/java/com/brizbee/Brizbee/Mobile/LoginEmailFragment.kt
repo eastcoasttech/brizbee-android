@@ -51,11 +51,13 @@ class LoginEmailFragment : Fragment() {
         return view
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun onRegisterClick(view: View?) {
         val intent = Intent(this.activity, RegisterStep1Activity::class.java)
         startActivity(intent)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun onLoginClick(view: View?) {
         thread(start = true) {
             login()

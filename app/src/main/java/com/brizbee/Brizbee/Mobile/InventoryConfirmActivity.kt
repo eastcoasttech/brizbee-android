@@ -3,7 +3,6 @@ package com.brizbee.Brizbee.Mobile
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.view.WindowManager
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -12,10 +11,10 @@ import com.android.volley.DefaultRetryPolicy
 import com.android.volley.Response
 import com.android.volley.RetryPolicy
 import com.android.volley.toolbox.JsonObjectRequest
-import org.json.JSONException
 import org.json.JSONObject
+import java.net.InetAddress
 import java.net.URLEncoder
-import java.util.HashMap
+import java.util.*
 import kotlin.concurrent.thread
 
 class InventoryConfirmActivity : AppCompatActivity() {
@@ -52,12 +51,14 @@ class InventoryConfirmActivity : AppCompatActivity() {
         MySingleton.getInstance(this).requestQueue.cancelAll(TAG)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onCancelClick(view: View?) {
         val intent = Intent(this, InventoryQuantityActivity::class.java)
         startActivity(intent)
         finish() // Prevents going back
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onContinueClick(view: View?) {
         thread(start = true) {
             confirm()
@@ -66,10 +67,12 @@ class InventoryConfirmActivity : AppCompatActivity() {
 
     private fun confirm() {
 
+        val hostname = InetAddress.getLocalHost().hostName
+
         // Instantiate the RequestQueue
         val url = String.format(
             "https://app-brizbee-prod.azurewebsites.net/api/QBDInventoryConsumptions/Consume?qbdInventoryItemId=%s&quantity=%s&hostname=%s",
-            item?.getString("Id"), quantity, URLEncoder.encode("the hostname", "utf-8")
+            item?.getString("Id"), quantity, URLEncoder.encode(hostname, "utf-8")
         )
         val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(
             Method.POST, url, null,
@@ -88,7 +91,9 @@ class InventoryConfirmActivity : AppCompatActivity() {
             },
             Response.ErrorListener { error ->
                 val response = error.networkResponse
-
+                val resultResponse = String(response.data)
+                val result = JSONObject(resultResponse)
+                println(result)
                 when (response?.statusCode) {
                     401 -> showDialog("No item matches that bar code value.")
                     else -> showDialog("Could not reach the server, please try again.")

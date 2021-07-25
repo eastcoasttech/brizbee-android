@@ -50,6 +50,7 @@ class LoginPinFragment : Fragment() {
         return view
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun onLoginClick(view: View?) {
         thread(start = true) {
             login()

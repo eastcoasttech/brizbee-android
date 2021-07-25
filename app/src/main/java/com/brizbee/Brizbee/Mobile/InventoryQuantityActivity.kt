@@ -66,12 +66,14 @@ class InventoryQuantityActivity : AppCompatActivity() {
         MySingleton.getInstance(this).requestQueue.cancelAll(TAG)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onCancelClick(view: View?) {
         val intent = Intent(this, InventoryItemActivity::class.java)
         startActivity(intent)
         finish() // Prevents going back
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onContinueClick(view: View?) {
         val intent = Intent(this, InventoryConfirmActivity::class.java)
 
