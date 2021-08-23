@@ -1,22 +1,57 @@
+//
+//  InventoryItemActivity.kt
+//  BRIZBEE Mobile for Android
+//
+//  Copyright © 2021 East Coast Technology Services, LLC
+//
+//  This file is part of BRIZBEE Mobile for Android.
+//
+//  BRIZBEE Mobile for Android is free software: you can redistribute
+//  it and/or modify it under the terms of the GNU General Public
+//  License as published by the Free Software Foundation, either
+//  version 3 of the License, or (at your option) any later version.
+//
+//  BRIZBEE Mobile for Android is distributed in the hope that it will
+//  be useful, but WITHOUT ANY WARRANTY; without even the implied
+//  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//  See the GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with BRIZBEE Mobile for Android.
+//  If not, see <https://www.gnu.org/licenses/>.
+//
+
 package com.brizbee.Brizbee.Mobile
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.*
 import com.android.volley.toolbox.JsonObjectRequest
-import com.google.zxing.integration.android.IntentIntegrator
 import java.util.*
 import kotlin.concurrent.thread
 
 class InventoryItemActivity : AppCompatActivity() {
     private var buttonScan: Button? = null
     private var editBarCodeValue: EditText? = null
+
+    private val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val scanContent = result.data?.extras?.get("BarCodeValue").toString()
+            editBarCodeValue?.setText(scanContent)
+
+            // Verify that the barcode is valid.
+            confirm()
+        }
+    }
 
     companion object {
         val TAG = InventoryItemActivity::class.qualifiedName
@@ -26,50 +61,19 @@ class InventoryItemActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_inventory_item)
 
-        // Get references from layouts
+        // Get references from layouts.
         buttonScan = findViewById(R.id.buttonScan)
         editBarCodeValue = findViewById(R.id.editBarCodeValue)
 
-        // Respond to button click
-        buttonScan?.setOnClickListener { view ->
-
-            if (view.id == R.id.buttonScan) {
-
-                // Start scanning
-                val scanIntegrator = IntentIntegrator(this)
-                scanIntegrator.initiateScan()
-            }
+        // Respond to button click.
+        buttonScan?.setOnClickListener {
+            // Start the barcode scanner.
+            startForResult.launch(Intent(this, BarcodeScanActivity::class.java))
         }
 
-        // Set focus
+        // Focus on the bar code value.
         if (editBarCodeValue?.requestFocus() == true) {
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
-        }
-    }
-
-    fun onClick(v: View) {
-
-        // Respond to button click
-        if (v.id == R.id.buttonScan) {
-
-            // Start scanning
-            val scanIntegrator = IntentIntegrator(this)
-            scanIntegrator.initiateScan()
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        // Retrieve the scan result
-        val scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent)
-        if (scanningResult != null) {
-            val scanContent = scanningResult.contents
-            editBarCodeValue?.setText("") // clear the text
-            editBarCodeValue?.setText(scanContent) // set the scanned value
-            confirm() // Verify that the task number is valid
-        } else {
-            showDialog("No bar code could be scanned, please try again.")
         }
     }
 
@@ -82,7 +86,9 @@ class InventoryItemActivity : AppCompatActivity() {
     fun onCancelClick(view: View?) {
         val intent = Intent(this, StatusActivity::class.java)
         startActivity(intent)
-        finish() // Prevents going back
+
+        // Prevent going back.
+        finish()
     }
 
     @Suppress("UNUSED_PARAMETER")

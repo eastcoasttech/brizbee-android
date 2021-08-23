@@ -11,7 +11,7 @@
         android:layout_height="wrap_content">
 
         <TextView
-            android:id="@+id/textConfirmOutTitle"
+            android:id="@+id/textConfirmInTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
@@ -26,7 +26,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
-            android:id="@+id/buttonConfirmOutContinue"
+            android:id="@+id/buttonConfirmInContinue"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
@@ -44,7 +44,7 @@
             app:layout_constraintTop_toBottomOf="@+id/spinnerTimeZone" />
 
         <Button
-            android:id="@+id/buttonConfirmOutCancel"
+            android:id="@+id/buttonConfirmInCancel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
@@ -58,7 +58,7 @@
             android:textAllCaps="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/buttonConfirmOutContinue" />
+            app:layout_constraintTop_toBottomOf="@+id/buttonConfirmInContinue" />
 
         <TextView
             android:id="@+id/textConfirmJob"
@@ -176,7 +176,7 @@
             android:textStyle="italic"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textConfirmOutTitle" />
+            app:layout_constraintTop_toBottomOf="@+id/textConfirmInTitle" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

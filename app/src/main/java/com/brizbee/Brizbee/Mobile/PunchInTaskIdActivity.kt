@@ -1,171 +1,154 @@
-package com.brizbee.Brizbee.Mobile;
+//
+//  PunchInTaskIdActivity.kt
+//  BRIZBEE Mobile for Android
+//
+//  Copyright © 2021 East Coast Technology Services, LLC
+//
+//  This file is part of BRIZBEE Mobile for Android.
+//
+//  BRIZBEE Mobile for Android is free software: you can redistribute
+//  it and/or modify it under the terms of the GNU General Public
+//  License as published by the Free Software Foundation, either
+//  version 3 of the License, or (at your option) any later version.
+//
+//  BRIZBEE Mobile for Android is distributed in the hope that it will
+//  be useful, but WITHOUT ANY WARRANTY; without even the implied
+//  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//  See the GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with BRIZBEE Mobile for Android.
+//  If not, see <https://www.gnu.org/licenses/>.
+//
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.View;
-import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
+package com.brizbee.Brizbee.Mobile
 
-import androidx.appcompat.app.AppCompatActivity;
+import android.app.Activity
+import android.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import android.content.Intent
+import android.widget.EditText
+import com.android.volley.toolbox.JsonObjectRequest
+import org.json.JSONException
+import kotlin.Throws
+import android.view.View
+import android.view.WindowManager
+import android.widget.Button
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.android.volley.*
+import java.util.HashMap
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.DefaultRetryPolicy;
-import com.android.volley.NetworkResponse;
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.RetryPolicy;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
+class PunchInTaskIdActivity : AppCompatActivity() {
+    private var buttonScan: Button? = null
+    private var editTaskNumber: EditText? = null
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+    private val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val scanContent = result.data?.extras?.get("BarCodeValue").toString()
+            editTaskNumber?.setText(scanContent)
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class PunchInTaskIdActivity extends AppCompatActivity implements View.OnClickListener {
-    private Button buttonScan;
-    private TextView editTaskNumber;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_punch_in_task_id);
-
-        // Get references from layouts
-        buttonScan = findViewById(R.id.buttonScan);
-        editTaskNumber = findViewById(R.id.editTaskNumber);
-
-        // Set the click listener
-        buttonScan.setOnClickListener(this);
-
-        // Focus on the task id
-        if (editTaskNumber.requestFocus()) {
-            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            // Verify that the barcode is valid.
+            confirm()
         }
     }
 
-    public void onClick(View v) {
-        // Respond to clicks
-        if (v.getId() == R.id.buttonScan) {
-            //scan
-            IntentIntegrator scanIntegrator = new IntentIntegrator(this);
-            scanIntegrator.initiateScan();
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_punch_in_task_id)
+
+        // Get references from layouts.
+        buttonScan = findViewById(R.id.buttonScan)
+        editTaskNumber = findViewById(R.id.editTaskNumber)
+
+        // Respond to button click.
+        buttonScan?.setOnClickListener {
+            // Start the barcode scanner.
+            startForResult.launch(Intent(this, BarcodeScanActivity::class.java))
+        }
+
+        // Focus on the task number.
+        if (editTaskNumber?.requestFocus() == true) {
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
         }
     }
 
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        // Retrieve the scan result
-        IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
-        if (scanningResult != null) {
-            String scanContent = scanningResult.getContents();
-            String scanFormat = scanningResult.getFormatName(); // barcode type
-            editTaskNumber.setText(""); // clear the text
-            editTaskNumber.setText(scanContent); // set the scanned value
-            confirm(); // Verify that the task number is valid
-        } else {
-            showDialog("No task number could be scanned, please try again.");
-        }
+    @Suppress("UNUSED_PARAMETER")
+    fun onCancelClick(view: View?) {
+        val intent = Intent(this, StatusActivity::class.java)
+        startActivity(intent)
+
+        // Prevent going back.
+        finish()
     }
 
-    public void onCancelClick(View view) {
-        final Intent intent = new Intent(this, StatusActivity.class);
-        startActivity(intent);
-        finish(); // prevents going back
+    @Suppress("UNUSED_PARAMETER")
+    fun onContinueClick(view: View?) {
+        confirm()
     }
 
-    public void onContinueClick(View view) {
-        confirm();
-    }
-
-    public void confirm() {
-        // Lookup the task number
-        final Intent intent = new Intent(this, PunchInConfirmActivity.class);
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        EditText editTaskNumber = findViewById(R.id.editTaskNumber);
+    private fun confirm() {
+        // Lookup the task number.
+        val intent = Intent(this, PunchInConfirmActivity::class.java)
+        val editTaskNumber = findViewById<EditText>(R.id.editTaskNumber)
 
         // Instantiate the RequestQueue
-        String url = String.format("https://app-brizbee-prod.azurewebsites.net/odata/Tasks?$expand=Job($expand=Customer)&$filter=Number eq '%s'", editTaskNumber.getText());
+        val url = String.format(
+            "https://app-brizbee-prod.azurewebsites.net/odata/Tasks/Default.Search(Number='%s')",
+            editTaskNumber.text
+        )
+        val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(
+            Method.GET, url, null, Response.Listener { response ->
+                try {
+                    if (response == null)
+                        // Notify the user that the task number does not exist
+                        showDialog("That's not a valid task number, please try again.")
 
-        JsonObjectRequest jsonRequest = new JsonObjectRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            JSONArray value = response.getJSONArray("value");
-
-                            if (value.length() > 0) {
-                                JSONObject first = value.getJSONObject(0);
-
-                                // Pass the task as a string
-                                intent.putExtra("task", first.toString());
-                                startActivity(intent);
-                            } else {
-                                // Notify the user that the task number does not exist
-                                showDialog("That's not a valid task number, please try again.");
-                            }
-                        } catch (JSONException e) {
-                            showDialog("Could not understand the response from the server, please try again.");
-                        }
-                    }
-                },
-                        new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                NetworkResponse response = error.networkResponse;
-                                switch (response.statusCode) {
-                                    default:
-                                        showDialog("Could not reach the server, please try again.");
-                                        break;
-                                }
-                            }
-                        }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> headers = new HashMap<String, String>();
-                headers.put("Content-Type", "application/json");
-
-                String authExpiration = ((MyApplication) getApplication()).getAuthExpiration();
-                String authToken = ((MyApplication) getApplication()).getAuthToken();
-                String authUserId = ((MyApplication) getApplication()).getAuthUserId();
-
-                if (authExpiration != null && !authExpiration.isEmpty() &&
-                        authToken != null && !authToken.isEmpty() &&
-                        authUserId != null && !authUserId.isEmpty()) {
-                    headers.put("AUTH_EXPIRATION", authExpiration);
-                    headers.put("AUTH_TOKEN", authToken);
-                    headers.put("AUTH_USER_ID", authUserId);
+                    // Pass the task as a string
+                    intent.putExtra("task", response.toString())
+                    startActivity(intent)
+                } catch (e: JSONException) {
+                    showDialog("Could not understand the response from the server, please try again.")
                 }
-
-                return headers;
+            },
+            Response.ErrorListener { error ->
+                val response = error.networkResponse
+                when (response.statusCode) {
+                    else -> showDialog("Could not reach the server, please try again.")
+                }
+            }) {
+            @Throws(AuthFailureError::class)
+            override fun getHeaders(): Map<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Content-Type"] = "application/json"
+                val authExpiration = (application as MyApplication).authExpiration
+                val authToken = (application as MyApplication).authToken
+                val authUserId = (application as MyApplication).authUserId
+                if (authExpiration != null && authExpiration.isNotEmpty() && authToken != null && authToken.isNotEmpty() && authUserId != null && authUserId.isNotEmpty()) {
+                    headers["AUTH_EXPIRATION"] = authExpiration
+                    headers["AUTH_TOKEN"] = authToken
+                    headers["AUTH_USER_ID"] = authUserId
+                }
+                return headers
             }
-        };
+        }
+        val socketTimeout = 10000
+        val policy: RetryPolicy =
+            DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
+        jsonRequest.retryPolicy = policy
 
-        int socketTimeout = 10000;
-        RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
-        jsonRequest.setRetryPolicy(policy);
-
-        // Add the request to the RequestQueue
-        MySingleton.getInstance(this).addToRequestQueue(jsonRequest);
+        // Add the request to the RequestQueue.
+        MySingleton.getInstance(this).addToRequestQueue(jsonRequest)
     }
 
-    private void showDialog(String message) {
-        // Build a dialog with the given message to show the user
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
-        builder.setMessage(message)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.dismiss();
-                    }
-                });
-        androidx.appcompat.app.AlertDialog dialog = builder.create();
-        dialog.show();
+    private fun showDialog(message: String) {
+        // Build a dialog with the given message to show the user.
+        val builder = AlertDialog.Builder(this)
+        builder
+            .setMessage(message)
+            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+        val dialog = builder.create()
+        dialog.show()
     }
 }

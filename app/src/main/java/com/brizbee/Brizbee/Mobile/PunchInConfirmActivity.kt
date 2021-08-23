@@ -1,290 +1,402 @@
-package com.brizbee.Brizbee.Mobile;
+//
+//  PunchInConfirmActivity.kt
+//  BRIZBEE Mobile for Android
+//
+//  Copyright © 2021 East Coast Technology Services, LLC
+//
+//  This file is part of BRIZBEE Mobile for Android.
+//
+//  BRIZBEE Mobile for Android is free software: you can redistribute
+//  it and/or modify it under the terms of the GNU General Public
+//  License as published by the Free Software Foundation, either
+//  version 3 of the License, or (at your option) any later version.
+//
+//  BRIZBEE Mobile for Android is distributed in the hope that it will
+//  be useful, but WITHOUT ANY WARRANTY; without even the implied
+//  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//  See the GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with BRIZBEE Mobile for Android.
+//  If not, see <https://www.gnu.org/licenses/>.
+//
+package com.brizbee.Brizbee.Mobile
 
-import android.Manifest;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Location;
-import android.os.Build;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Spinner;
-import android.widget.TextView;
+import android.Manifest
+import androidx.appcompat.app.AppCompatActivity
+import org.json.JSONObject
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.FusedLocationProviderClient
+import android.os.Bundle
+import org.json.JSONException
+import com.google.android.gms.location.LocationServices
+import android.content.Intent
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import androidx.core.app.ActivityCompat
+import android.content.pm.PackageManager
+import android.location.LocationManager
+import android.os.Build
+import android.os.Looper
+import com.android.volley.toolbox.JsonObjectRequest
+import kotlin.Throws
+import android.util.Log
+import android.view.View
+import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
+import com.android.volley.*
+import java.lang.Exception
+import java.util.HashMap
+import kotlin.concurrent.thread
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
+class PunchInConfirmActivity : AppCompatActivity() {
+    private var currentLatitude = 0.0
+    private var currentLongitude = 0.0
+    private var textConfirmTask: TextView? = null
+    private var textConfirmCustomer: TextView? = null
+    private var textConfirmJob: TextView? = null
+    private var task: JSONObject? = null
+    private var job: JSONObject? = null
+    private var customer: JSONObject? = null
+    private var locationCallback: LocationCallback? = null
+    private var spinnerTimeZone: Spinner? = null
+    private lateinit var timezonesIds: Array<String?>
+    private var selectedTimeZone: String? = null
+    private var fusedLocationClient: FusedLocationProviderClient? = null
+    private var locationAllowed = true
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.DefaultRetryPolicy;
-import com.android.volley.NetworkResponse;
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.RetryPolicy;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.brizbee.Brizbee.Mobile.models.TimeZone;
-import com.brizbee.Brizbee.Mobile.models.User;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
-
-public class PunchInConfirmActivity extends AppCompatActivity {
-    private static final String TAG = "PunchInConfirmActivity";
-    double currentLatitude = 0.0;
-    double currentLongitude = 0.0;
-    private TextView textConfirmTask;
-    private TextView textConfirmCustomer;
-    private TextView textConfirmJob;
-    private JSONObject task;
-    private JSONObject job;
-    private JSONObject customer;
-    private LocationCallback locationCallback;
-    private Spinner spinnerTimeZone;
-    private String[] timezonesIds;
-    private String selectedTimeZone;
-
-    private FusedLocationProviderClient fusedLocationClient;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_punch_in_confirm);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_punch_in_confirm)
 
         // Get references from layouts
-        spinnerTimeZone = findViewById(R.id.spinnerTimeZone);
-        textConfirmTask = findViewById(R.id.textConfirmTask);
-        textConfirmCustomer = findViewById(R.id.textConfirmCustomer);
-        textConfirmJob = findViewById(R.id.textConfirmJob);
+        spinnerTimeZone = findViewById(R.id.spinnerTimeZone)
+        textConfirmTask = findViewById(R.id.textConfirmTask)
+        textConfirmCustomer = findViewById(R.id.textConfirmCustomer)
+        textConfirmJob = findViewById(R.id.textConfirmJob)
 
         try {
-            task = new JSONObject(getIntent().getStringExtra("task"));
-            job = task.getJSONObject("Job");
-            customer = job.getJSONObject("Customer");
+            task = JSONObject(intent.getStringExtra("task")!!)
+            job = task?.getJSONObject("Job")
+            customer = job?.getJSONObject("Customer")
 
             // Task Number and Name
-            textConfirmTask.setText(
-                    String.format("%s - %s",
-                            task.getString("Number"),
-                            task.getString("Name"))
-            );
+            textConfirmTask?.text = String.format(
+                "%s - %s",
+                task?.getString("Number"),
+                task?.getString("Name")
+            )
 
             // Customer Number and Name
-            textConfirmCustomer.setText(
-                    String.format("%s - %s",
-                            customer.getString("Number"),
-                            customer.getString("Name"))
-            );
+            textConfirmCustomer?.text = String.format(
+                "%s - %s",
+                customer?.getString("Number"),
+                customer?.getString("Name")
+            )
 
             // Job Number and Name
-            textConfirmJob.setText(
-                    String.format("%s - %s",
-                            job.getString("Number"),
-                            job.getString("Name"))
-            );
-        } catch (JSONException e) {
-            showDialog("Could not display the task you selected, please go back and try again.");
+            textConfirmJob?.text = String.format(
+                "%s - %s",
+                job?.getString("Number"),
+                job?.getString("Name")
+            )
+        } catch (e: JSONException) {
+            showDialog("Could not display the task you selected, please go back and try again.")
         }
 
-        // Allows getting the last known location
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        // Allows getting the location.
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         // Get timezones from application and configure spinner
-        TimeZone[] timezones = ((MyApplication) getApplication()).getTimeZones();
-        timezonesIds = new String[timezones.length];
-        for (int i = 0; i < timezones.length; i++) {
-            timezonesIds[i] = timezones[i].getId();
+        val timezones = (application as MyApplication).timeZones
+        timezonesIds = arrayOfNulls(timezones.size)
+        for (i in timezones.indices) {
+            timezonesIds[i] = timezones[i].id
         }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_dropdown_item, timezonesIds);
-        spinnerTimeZone.setAdapter(adapter);
-
-        spinnerTimeZone.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view,
-                                       int position, long id) {
-                Log.i(TAG, "An item has been selected at position:");
-                Log.i(TAG, String.valueOf(position));
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_dropdown_item, timezonesIds
+        )
+        spinnerTimeZone?.adapter = adapter
+        spinnerTimeZone?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?, view: View,
+                position: Int, id: Long
+            ) {
+                Log.i(TAG, "An item has been selected at position:")
+                Log.i(TAG, position.toString())
 
                 // Store selected item
-                int sid = spinnerTimeZone.getSelectedItemPosition();
-                selectedTimeZone = timezonesIds[sid];
+                val sid = spinnerTimeZone?.selectedItemPosition
+                selectedTimeZone = timezonesIds[sid!!]
             }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
+            override fun onNothingSelected(parent: AdapterView<*>?) {
                 // Do nothing
             }
-        });
+        }
 
-        // Set selected item to be the user's time zone
-        User user = ((MyApplication) getApplication()).getUser();
-        for (int i = 0; i < timezonesIds.length; i++) {
-            if (timezonesIds[i].equalsIgnoreCase(user.getTimeZone())) {
-                spinnerTimeZone.setSelection(i);
+        // Set selected item to be the user's time zone.
+        val user = (application as MyApplication).user
+        for (i in timezonesIds.indices) {
+            if (timezonesIds[i].equals(user.timeZone, ignoreCase = true)) {
+                spinnerTimeZone?.setSelection(i)
             }
         }
     }
 
-    public void onCancelClick(View view) {
-        final Intent intent = new Intent(this, StatusActivity.class);
-        startActivity(intent);
-        finish(); // prevents going back
+    @Suppress("UNUSED_PARAMETER")
+    fun onCancelClick(view: View?) {
+        val intent = Intent(this, StatusActivity::class.java)
+        startActivity(intent)
+
+        // Prevent going back.
+        finish()
     }
 
-    public void onContinueClick(View view) {
+    @Suppress("UNUSED_PARAMETER")
+    fun onContinueClick(view: View?) {
+        thread(start = true) {
+            getLocation()
+        }
+    }
+
+    private fun getLocation() {
+        var progressDialog: androidx.appcompat.app.AlertDialog? = null
+        var locationEnabled = true
+
+        runOnUiThread {
+            // Prepare a progress dialog.
+            val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            builder.setMessage("Getting your location")
+            progressDialog = builder.create()
+            progressDialog?.setCancelable(false)
+            progressDialog?.setCanceledOnTouchOutside(false)
+        }
+
         try {
-            // Recording current location is optional
-            User user = ((MyApplication) getApplication()).getUser();
-            if (user.getRequiresLocation()) {
-                LocationRequest locationRequest = LocationRequest.create();
-                locationRequest.setInterval(10000);
-                locationRequest.setFastestInterval(5000);
-                locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            val user = (application as MyApplication).user
 
-                locationCallback = new LocationCallback() {
-                    @Override
-                    public void onLocationResult(LocationResult locationResult) {
-                        if (locationResult != null) {
-                            Location location = locationResult.getLocations().get(0);
+            // Recording current location is optional.
+            if (!user.requiresLocation) {
+                // Save without location.
+                Log.i(TAG, "Saving without location because location is not required")
+                save()
+            }
 
-                            // Get the coordinates of the location
-                            currentLatitude = location.getLatitude();
-                            currentLongitude = location.getLongitude();
+            val lm = getSystemService(LOCATION_SERVICE) as LocationManager
 
-                            // Stop getting location updates
-                            fusedLocationClient.removeLocationUpdates(locationCallback);
+            // Check if the location service is enabled.
+            if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                locationEnabled = false
 
-                            // Save with the location
-                            save();
-                        } else {
-                            // Save without the location
-                            save();
+            // Cannot continue so alert the user.
+            if (!locationEnabled) {
+                runOnUiThread {
+                    Log.i(TAG, "Location is not enabled and is required by BRIZBEE")
+                    showDialog("Location is not enabled but is required by BRIZBEE")
+                }
+                return
+            }
+
+            // Attempt to get location updates.
+            val locationRequest = LocationRequest.create()
+            locationRequest.interval = 5 * 1000
+            locationRequest.fastestInterval = 1 * 1000
+            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+
+            locationCallback = object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult?) {
+                    if (locationResult == null) {
+                        // Save without the location.
+                        Log.i(TAG, "Saving without location because location cannot be acquired")
+
+                        runOnUiThread {
+                            progressDialog?.dismiss()
                         }
+
+                        save()
+
+                        return
                     }
 
-                    ;
-                };
+                    val location = locationResult.locations[0]
 
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
+                    // Get the coordinates of the location.
+                    currentLatitude = location.latitude
+                    currentLongitude = location.longitude
+
+                    // Stop getting location updates.
+                    fusedLocationClient!!.removeLocationUpdates(locationCallback!!)
+
+                    Log.i(TAG, "Saving with the location")
+
+                    runOnUiThread {
+                        progressDialog?.dismiss()
+                    }
+
+                    // Save with the location.
+                    save()
                 }
-
-                fusedLocationClient.requestLocationUpdates(locationRequest,
-                        locationCallback,
-                        null /* Looper */);
-            } else {
-                // Save because user is not required to have location
-                save();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            // Check or request permission for fine location.
+            if (ActivityCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                locationAllowed = false
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    ActivityCompat.requestPermissions(this,
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+                } else {
+                    ActivityCompat.requestPermissions(this,
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+                }
+            }
+
+            // Do not continue without location permission.
+            if (!locationAllowed)
+                return
+
+            runOnUiThread {
+                progressDialog?.show()
+            }
+
+            // Start getting location updates.
+            fusedLocationClient!!.requestLocationUpdates(
+                locationRequest,
+                locationCallback!!,
+                Looper.getMainLooper()
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, e.toString())
+
+            runOnUiThread {
+                progressDialog?.dismiss()
+            }
         }
     }
 
-    public void save() {
-        final Intent intent = new Intent(this, StatusActivity.class);
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    override fun onRequestPermissionsResult(requestCode: Int,
+                                            permissions: Array<String>,
+                                            grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        // Instantiate the RequestQueue
-        String url = "https://app-brizbee-prod.azurewebsites.net/odata/Punches/Default.PunchIn";
-        // Request a string response from the provided URL
-        JSONObject jsonBody = new JSONObject();
+        when (requestCode) {
+            1 -> {
+                if (grantResults.isNotEmpty() && grantResults[0] ==
+                    PackageManager.PERMISSION_GRANTED) {
+                    if ((ActivityCompat.checkSelfPermission(this,
+                            Manifest.permission.ACCESS_FINE_LOCATION) ==
+                                PackageManager.PERMISSION_GRANTED)) {
+                        // Continue with the existing workflow.
+                        locationAllowed = true
+                        getLocation()
+                    }
+                } else {
+                    Log.w(TAG, "Does not have permission, cannot continue")
+                    showDialog("Location permission has been denied but is required by BRIZBEE")
+                }
+                return
+            }
+        }
+    }
+
+    fun save() {
+        var progressDialog: androidx.appcompat.app.AlertDialog? = null
+
+        runOnUiThread {
+            // Prepare a progress dialog.
+            val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            builder.setMessage("Saving")
+            builder.setCancelable(false)
+            progressDialog = builder.create()
+            progressDialog?.setCancelable(false)
+            progressDialog?.setCanceledOnTouchOutside(false)
+            progressDialog?.show()
+        }
+
+        val intent = Intent(this, StatusActivity::class.java)
+
+        // Instantiate the RequestQueue.
+        val url = "https://app-brizbee-prod.azurewebsites.net/odata/Punches/Default.PunchIn"
+
+        // Request a string response from the provided URL.
+        val jsonBody = JSONObject()
         try {
-            jsonBody.put("TaskId", task.get("Id"));
-            jsonBody.put("SourceHardware", "Mobile");
-            jsonBody.put("InAtTimeZone", selectedTimeZone);
-            jsonBody.put("SourceOperatingSystem", "Android");
-            jsonBody.put("SourceOperatingSystemVersion", Build.VERSION.RELEASE);
-            jsonBody.put("SourceBrowser", "N/A");
-            jsonBody.put("SourceBrowserVersion", "N/A");
-
+            jsonBody.put("TaskId", task!!["Id"])
+            jsonBody.put("SourceHardware", "Mobile")
+            jsonBody.put("InAtTimeZone", selectedTimeZone)
+            jsonBody.put("SourceOperatingSystem", "Android")
+            jsonBody.put("SourceOperatingSystemVersion", Build.VERSION.RELEASE)
+            jsonBody.put("SourceBrowser", "N/A")
+            jsonBody.put("SourceBrowserVersion", "N/A")
             if (currentLatitude != 0.0 && currentLatitude != 0.0) {
-                jsonBody.put("LatitudeForInAt", String.valueOf(currentLatitude));
-                jsonBody.put("LongitudeForInAt", String.valueOf(currentLongitude));
+                jsonBody.put("LatitudeForInAt", currentLatitude.toString())
+                jsonBody.put("LongitudeForInAt", currentLongitude.toString())
             } else {
-                jsonBody.put("LatitudeForInAt", "");
-                jsonBody.put("LongitudeForInAt", "");
+                jsonBody.put("LatitudeForInAt", "")
+                jsonBody.put("LongitudeForInAt", "")
             }
-        } catch (JSONException e) {
-            showDialog("Could not prepare the request to the server, please try again.");
+        } catch (e: JSONException) {
+            runOnUiThread {
+                progressDialog?.dismiss()
+                showDialog("Could not prepare the request to the server, please try again.")
+            }
         }
-        JsonObjectRequest jsonRequest = new JsonObjectRequest
-                (Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        startActivity(intent);
-                        finish();
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        NetworkResponse response = error.networkResponse;
-                        switch (response.statusCode) {
-                            default:
-                                showDialog("Could not reach the server, please try again.");
-                                break;
+        val jsonRequest: JsonObjectRequest =
+            object : JsonObjectRequest(Method.POST, url, jsonBody, Response.Listener {
+                runOnUiThread {
+                    progressDialog?.dismiss()
+                    startActivity(intent)
+                    finish()
+                }
+            }, Response.ErrorListener { error ->
+                val response = error.networkResponse
+                when (response.statusCode) {
+                    else -> {
+                        runOnUiThread {
+                            progressDialog?.dismiss()
+                            showDialog("Could not reach the server, please try again.")
                         }
                     }
-                }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> headers = new HashMap<String, String>();
-                headers.put("Content-Type", "application/json");
-
-                String authExpiration = ((MyApplication) getApplication()).getAuthExpiration();
-                String authToken = ((MyApplication) getApplication()).getAuthToken();
-                String authUserId = ((MyApplication) getApplication()).getAuthUserId();
-
-                if (authExpiration != null && !authExpiration.isEmpty() &&
-                        authToken != null && !authToken.isEmpty() &&
-                        authUserId != null && !authUserId.isEmpty()) {
-                    headers.put("AUTH_EXPIRATION", authExpiration);
-                    headers.put("AUTH_TOKEN", authToken);
-                    headers.put("AUTH_USER_ID", authUserId);
                 }
-
-                return headers;
+            }) {
+                @Throws(AuthFailureError::class)
+                override fun getHeaders(): Map<String, String> {
+                    val headers = HashMap<String, String>()
+                    headers["Content-Type"] = "application/json"
+                    val authExpiration = (application as MyApplication).authExpiration
+                    val authToken = (application as MyApplication).authToken
+                    val authUserId = (application as MyApplication).authUserId
+                    if (authExpiration != null && authExpiration.isNotEmpty() && authToken != null && authToken.isNotEmpty() && authUserId != null && authUserId.isNotEmpty()) {
+                        headers["AUTH_EXPIRATION"] = authExpiration
+                        headers["AUTH_TOKEN"] = authToken
+                        headers["AUTH_USER_ID"] = authUserId
+                    }
+                    return headers
+                }
             }
-        };
+        val socketTimeout = 10000
+        val policy: RetryPolicy =
+            DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
+        jsonRequest.retryPolicy = policy
 
-        int socketTimeout = 10000;
-        RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
-        jsonRequest.setRetryPolicy(policy);
-
-        // Add the request to the RequestQueue
-        MySingleton.getInstance(this).addToRequestQueue(jsonRequest);
+        // Add the request to the RequestQueue.
+        MySingleton.getInstance(this).addToRequestQueue(jsonRequest)
     }
 
-    private void showDialog(String message) {
-        // Build a dialog with the given message to show the user
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
-        builder.setMessage(message)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.dismiss();
-                    }
-                });
-        androidx.appcompat.app.AlertDialog dialog = builder.create();
-        dialog.show();
+    private fun showDialog(message: String) {
+        // Build a dialog with the given message to show the user.
+        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+        builder
+            .setMessage(message)
+            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+        val dialog = builder.create()
+        dialog.show()
+    }
+
+    companion object {
+        private const val TAG = "PunchInConfirmActivity"
     }
 }
