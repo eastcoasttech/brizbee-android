@@ -45,4 +45,10 @@
 
     <string name="activity_punch_out_confirm_title">Do you want to PUNCH OUT?</string>
     <string name="activity_punch_out_confirm_time_zone">Time Zone</string>
+
+    <string name="fragment_login_email_hint_email_address">Email Address</string>
+    <string name="fragment_login_email_hint_password">Password</string>
+
+    <string name="fragment_login_pin_hint_organization_code">Organization Code</string>
+    <string name="fragment_login_pin_hint_user_pin">PIN</string>
 </resources>
