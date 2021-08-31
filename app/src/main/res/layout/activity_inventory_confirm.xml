@@ -89,7 +89,7 @@
             android:layout_marginEnd="24dp"
             android:layout_marginRight="24dp"
             android:background="@drawable/custom_button_secondary"
-            android:onClick="onContinueClick"
+            android:onClick="onAnotherClick"
             android:text="@string/another_name"
             android:textAllCaps="true"
             app:layout_constraintEnd_toEndOf="parent"

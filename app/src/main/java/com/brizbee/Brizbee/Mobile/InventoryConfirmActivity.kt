@@ -46,6 +46,8 @@ class InventoryConfirmActivity : AppCompatActivity() {
     private var item: JSONObject? = null
     private var name: String? = null
     private var quantity: String? = null
+    var progressDialog: AlertDialog? = null
+    var another: Boolean = false
 
     companion object {
         val TAG = InventoryConfirmActivity::class.qualifiedName
@@ -78,7 +80,7 @@ class InventoryConfirmActivity : AppCompatActivity() {
     fun onCancelClick(view: View?) {
         val intent = Intent(this, InventoryQuantityActivity::class.java)
         startActivity(intent)
-        finish() // Prevents going back
+        finish()
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -88,62 +90,76 @@ class InventoryConfirmActivity : AppCompatActivity() {
         }
     }
 
+    @Suppress("UNUSED_PARAMETER")
+    fun onAnotherClick(view: View?) {
+        thread(start = true) {
+            another = true
+            confirm()
+        }
+    }
+
     private fun confirm() {
+        runOnUiThread {
+            // Prepare a progress dialog.
+            val builder = AlertDialog.Builder(this)
+            builder.setMessage("Working")
+            builder.setCancelable(false)
+            progressDialog = builder.create()
+            progressDialog?.setCancelable(false)
+            progressDialog?.setCanceledOnTouchOutside(false)
+            progressDialog?.show()
+        }
 
         val hostname = InetAddress.getLocalHost().hostName
 
-        // Instantiate the RequestQueue
-        val url = String.format(
-            "https://app-brizbee-prod.azurewebsites.net/api/QBDInventoryConsumptions/Consume?qbdInventoryItemId=%s&quantity=%s&hostname=%s",
-            item?.getString("Id"), quantity, URLEncoder.encode(hostname, "utf-8")
-        )
-        val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(
-            Method.POST, url, null,
-            Response.Listener { response ->
+        // Instantiate the RequestQueue.
+        val builder = StringBuilder()
+        builder.append("${(application as MyApplication).baseUrl}/api/Kiosk/InventoryItems/Consume")
+            .append("?qbdInventoryItemId=${item?.getString("Id")}")
+            .append("&quantity=${quantity}")
+            .append("&hostname=${URLEncoder.encode(hostname, "utf-8")}")
 
+        val request: JsonObjectRequest = object : JsonObjectRequest(Method.POST, builder.toString(), null,
+            { response ->
                 runOnUiThread {
-                    val intent = Intent(this, StatusActivity::class.java)
+                    progressDialog?.dismiss()
 
-                    // Pass the item as a string
-                    val item = response.toString()
-                    intent.putExtra("item", item)
-
-                    startActivity(intent)
-                    finish() // Prevents going back
+                    if (another == true) {
+                        val intent = Intent(this, InventoryItemActivity::class.java)
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        val intent = Intent(this, StatusActivity::class.java)
+                        startActivity(intent)
+                        finish()
+                    }
                 }
-            },
-            Response.ErrorListener { error ->
-                val response = error.networkResponse
-                val resultResponse = String(response.data)
-                val result = JSONObject(resultResponse)
-                println(result)
-                when (response?.statusCode) {
-                    401 -> showDialog("No item matches that bar code value.")
-                    else -> showDialog("Could not reach the server, please try again.")
+            }, { error ->
+                runOnUiThread {
+                    val response = error.networkResponse
+                    when (response.statusCode) {
+                        401 -> {
+                            progressDialog?.dismiss()
+                            showDialog("No item matches that bar code value.")
+                        }
+                        else -> {
+                            progressDialog?.dismiss()
+                            showDialog("Could not reach the server, please try again.")
+                        }
+                    }
                 }
             }) {
-            @Throws(AuthFailureError::class)
-            override fun getHeaders(): Map<String, String> {
-                val headers = HashMap<String, String>()
-                headers["Content-Type"] = "application/json"
-                val authExpiration = (application as MyApplication).authExpiration
-                val authToken = (application as MyApplication).authToken
-                val authUserId = (application as MyApplication).authUserId
-                if (authExpiration != null && !authExpiration.isEmpty() && authToken != null && !authToken.isEmpty() && authUserId != null && !authUserId.isEmpty()) {
-                    headers["AUTH_EXPIRATION"] = authExpiration
-                    headers["AUTH_TOKEN"] = authToken
-                    headers["AUTH_USER_ID"] = authUserId
+                override fun getHeaders(): Map<String, String> {
+                    return (application as MyApplication).authHeaders
                 }
-                return headers
             }
-        }
-        val socketTimeout = 10000
-        val policy: RetryPolicy =
-            DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
-        jsonRequest.retryPolicy = policy
 
-        // Add the request to the RequestQueue
-        MySingleton.getInstance(this).addToRequestQueue(jsonRequest)
+        // Increase number of retries because we may be on a poor connection.
+        request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
+
+        // Add the request to the RequestQueue.
+        request.tag = TAG
+        MySingleton.getInstance(this).addToRequestQueue(request)
     }
 
     private fun showDialog(message: String) {

@@ -23,31 +23,29 @@
 package com.brizbee.Brizbee.Mobile
 
 import android.Manifest
-import androidx.appcompat.app.AppCompatActivity
-import org.json.JSONObject
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.FusedLocationProviderClient
-import android.os.Bundle
-import org.json.JSONException
-import com.google.android.gms.location.LocationServices
 import android.content.Intent
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import androidx.core.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
+import android.os.Bundle
 import android.os.Looper
-import com.android.volley.toolbox.JsonObjectRequest
-import kotlin.Throws
 import android.util.Log
 import android.view.View
-import android.widget.*
-import androidx.activity.result.contract.ActivityResultContracts
-import com.android.volley.*
-import java.lang.Exception
-import java.util.HashMap
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Spinner
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import com.android.volley.DefaultRetryPolicy
+import com.android.volley.toolbox.JsonObjectRequest
+import com.google.android.gms.location.*
+import org.json.JSONException
+import org.json.JSONObject
+import java.util.*
 import kotlin.concurrent.thread
+
 
 class PunchInConfirmActivity : AppCompatActivity() {
     private var currentLatitude = 0.0
@@ -64,12 +62,17 @@ class PunchInConfirmActivity : AppCompatActivity() {
     private var selectedTimeZone: String? = null
     private var fusedLocationClient: FusedLocationProviderClient? = null
     private var locationAllowed = true
+    var progressDialog: AlertDialog? = null
+
+    companion object {
+        val TAG = PunchInConfirmActivity::class.qualifiedName
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_punch_in_confirm)
 
-        // Get references from layouts
+        // Get references from layouts.
         spinnerTimeZone = findViewById(R.id.spinnerTimeZone)
         textConfirmTask = findViewById(R.id.textConfirmTask)
         textConfirmCustomer = findViewById(R.id.textConfirmCustomer)
@@ -107,7 +110,7 @@ class PunchInConfirmActivity : AppCompatActivity() {
         // Allows getting the location.
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // Get timezones from application and configure spinner
+        // Get timezones from application and configure spinner.
         val timezones = (application as MyApplication).timeZones
         timezonesIds = arrayOfNulls(timezones.size)
         for (i in timezones.indices) {
@@ -123,9 +126,6 @@ class PunchInConfirmActivity : AppCompatActivity() {
                 parent: AdapterView<*>?, view: View,
                 position: Int, id: Long
             ) {
-                Log.i(TAG, "An item has been selected at position:")
-                Log.i(TAG, position.toString())
-
                 // Store selected item
                 val sid = spinnerTimeZone?.selectedItemPosition
                 selectedTimeZone = timezonesIds[sid!!]
@@ -149,8 +149,6 @@ class PunchInConfirmActivity : AppCompatActivity() {
     fun onCancelClick(view: View?) {
         val intent = Intent(this, StatusActivity::class.java)
         startActivity(intent)
-
-        // Prevent going back.
         finish()
     }
 
@@ -162,12 +160,11 @@ class PunchInConfirmActivity : AppCompatActivity() {
     }
 
     private fun getLocation() {
-        var progressDialog: androidx.appcompat.app.AlertDialog? = null
         var locationEnabled = true
 
         runOnUiThread {
             // Prepare a progress dialog.
-            val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            val builder = AlertDialog.Builder(this)
             builder.setMessage("Getting your location")
             progressDialog = builder.create()
             progressDialog?.setCancelable(false)
@@ -201,8 +198,8 @@ class PunchInConfirmActivity : AppCompatActivity() {
 
             // Attempt to get location updates.
             val locationRequest = LocationRequest.create()
-            locationRequest.interval = 5 * 1000
-            locationRequest.fastestInterval = 1 * 1000
+            locationRequest.interval = (5 * 1000).toLong()
+            locationRequest.fastestInterval = (1 * 1000).toLong()
             locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
 
             locationCallback = object : LocationCallback() {
@@ -303,11 +300,9 @@ class PunchInConfirmActivity : AppCompatActivity() {
     }
 
     fun save() {
-        var progressDialog: androidx.appcompat.app.AlertDialog? = null
-
         runOnUiThread {
             // Prepare a progress dialog.
-            val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            val builder = AlertDialog.Builder(this)
             builder.setMessage("Saving")
             builder.setCancelable(false)
             progressDialog = builder.create()
@@ -319,84 +314,65 @@ class PunchInConfirmActivity : AppCompatActivity() {
         val intent = Intent(this, StatusActivity::class.java)
 
         // Instantiate the RequestQueue.
-        val url = "https://app-brizbee-prod.azurewebsites.net/odata/Punches/Default.PunchIn"
+        val builder = StringBuilder()
+        builder.append("${(application as MyApplication).baseUrl}/api/Kiosk/PunchIn")
+            .append("?taskId=${task!!["Id"]}")
+            .append("&sourceHardware=Mobile")
+            .append("&timeZone=${selectedTimeZone}")
+            .append("&sourceOperatingSystem=Android")
+            .append("&sourceOperatingSystemVersion=${Build.VERSION.RELEASE}")
+            .append("&sourceBrowser=N/A")
+            .append("&sourceBrowserVersion=N/A")
 
-        // Request a string response from the provided URL.
-        val jsonBody = JSONObject()
-        try {
-            jsonBody.put("TaskId", task!!["Id"])
-            jsonBody.put("SourceHardware", "Mobile")
-            jsonBody.put("InAtTimeZone", selectedTimeZone)
-            jsonBody.put("SourceOperatingSystem", "Android")
-            jsonBody.put("SourceOperatingSystemVersion", Build.VERSION.RELEASE)
-            jsonBody.put("SourceBrowser", "N/A")
-            jsonBody.put("SourceBrowserVersion", "N/A")
-            if (currentLatitude != 0.0 && currentLatitude != 0.0) {
-                jsonBody.put("LatitudeForInAt", currentLatitude.toString())
-                jsonBody.put("LongitudeForInAt", currentLongitude.toString())
-            } else {
-                jsonBody.put("LatitudeForInAt", "")
-                jsonBody.put("LongitudeForInAt", "")
-            }
-        } catch (e: JSONException) {
-            runOnUiThread {
-                progressDialog?.dismiss()
-                showDialog("Could not prepare the request to the server, please try again.")
-            }
+        if (currentLatitude != 0.0 && currentLatitude != 0.0) {
+            builder.append("&latitude=$currentLatitude")
+            builder.append("&longitude=$currentLongitude")
+        } else {
+            builder.append("&latitude=")
+            builder.append("&longitude=")
         }
-        val jsonRequest: JsonObjectRequest =
-            object : JsonObjectRequest(Method.POST, url, jsonBody, Response.Listener {
+
+        val request: JsonObjectRequest = object : JsonObjectRequest(Method.POST, builder.toString(), null,
+            { response ->
                 runOnUiThread {
                     progressDialog?.dismiss()
                     startActivity(intent)
                     finish()
                 }
-            }, Response.ErrorListener { error ->
-                val response = error.networkResponse
-                when (response.statusCode) {
-                    else -> {
-                        runOnUiThread {
+            }, { error ->
+                runOnUiThread {
+                    val response = error.networkResponse
+                    when (response.statusCode) {
+                        else -> {
                             progressDialog?.dismiss()
                             showDialog("Could not reach the server, please try again.")
                         }
                     }
                 }
             }) {
-                @Throws(AuthFailureError::class)
                 override fun getHeaders(): Map<String, String> {
-                    val headers = HashMap<String, String>()
-                    headers["Content-Type"] = "application/json"
-                    val authExpiration = (application as MyApplication).authExpiration
-                    val authToken = (application as MyApplication).authToken
-                    val authUserId = (application as MyApplication).authUserId
-                    if (authExpiration != null && authExpiration.isNotEmpty() && authToken != null && authToken.isNotEmpty() && authUserId != null && authUserId.isNotEmpty()) {
-                        headers["AUTH_EXPIRATION"] = authExpiration
-                        headers["AUTH_TOKEN"] = authToken
-                        headers["AUTH_USER_ID"] = authUserId
-                    }
-                    return headers
+                    return (application as MyApplication).authHeaders
                 }
             }
-        val socketTimeout = 10000
-        val policy: RetryPolicy =
-            DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
-        jsonRequest.retryPolicy = policy
+
+        // Increase number of retries because we may be on a poor connection.
+        request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
 
         // Add the request to the RequestQueue.
-        MySingleton.getInstance(this).addToRequestQueue(jsonRequest)
+        request.tag = TAG
+        MySingleton.getInstance(this).addToRequestQueue(request)
     }
 
     private fun showDialog(message: String) {
-        // Build a dialog with the given message to show the user.
-        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
-        builder
-            .setMessage(message)
-            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-        val dialog = builder.create()
-        dialog.show()
-    }
-
-    companion object {
-        private const val TAG = "PunchInConfirmActivity"
+        runOnUiThread {
+            // Build a dialog with the given message to show the user
+            val builder = AlertDialog.Builder(this)
+            builder.setMessage(message)
+                .setPositiveButton(
+                    "OK"
+                ) { dialog, _ -> dialog.dismiss() }
+            val dialog = builder.create()
+            dialog.show()
+        }
     }
 }

@@ -26,17 +26,17 @@ package com.brizbee.Brizbee.Mobile
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
-import android.text.InputType
 import android.util.Log
-import android.util.Log.WARN
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Spinner
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.*
+import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.brizbee.Brizbee.Mobile.models.Customer
 import com.brizbee.Brizbee.Mobile.models.Job
@@ -47,14 +47,9 @@ import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
-
+import kotlin.concurrent.thread
 
 class TimeCardActivity : AppCompatActivity() {
-
-    companion object {
-        val TAG = TimeCardActivity::class.qualifiedName
-    }
-
     private var editDate: EditText? = null
     private var spinnerMCustomer: Spinner? = null
     private var spinnerMJob: Spinner? = null
@@ -67,6 +62,11 @@ class TimeCardActivity : AppCompatActivity() {
     private var selectedHour = 0
     private var selectedMinute = 0
     private var datePicker: DatePickerDialog? = null
+    var progressDialog: AlertDialog? = null
+
+    companion object {
+        val TAG = TimeCardActivity::class.qualifiedName
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -136,8 +136,10 @@ class TimeCardActivity : AppCompatActivity() {
 
         editDate!!.setOnClickListener { datePicker!!.show() }
 
-        // Refresh the customer list
-        refreshCustomers()
+        // Refresh the customers, projects, then tasks.
+        thread(start = true) {
+            refreshCustomers()
+        }
 
         // Focus on the hours
         spinnerHours!!.clearFocus()
@@ -151,317 +153,287 @@ class TimeCardActivity : AppCompatActivity() {
 
     @Suppress("UNUSED_PARAMETER")
     fun onContinueClick(view: View?) {
-        save()
+        thread(start = true) {
+            save()
+        }
     }
 
     @Suppress("UNUSED_PARAMETER")
     fun onCancelClick(view: View?) {
-        // Take the user to the status activity
         val intent = Intent(this, StatusActivity::class.java)
         startActivity(intent)
-        finish() // prevents going back
+        finish()
     }
 
     private fun refreshCustomers() {
-        val url = "https://app-brizbee-prod.azurewebsites.net/odata/Customers?\$count=true&\$orderby=Number&\$top=20&\$skip=0"
+        // Instantiate the RequestQueue.
+        val url = "${(application as MyApplication).baseUrl}/api/Kiosk/Customers"
 
-        val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
-                Response.Listener { response: JSONObject ->
-                    try {
-                        // Format for parsing timestamps from server
-                        val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'", Locale.ENGLISH)
+        val request: JsonArrayRequest = object : JsonArrayRequest(Method.GET, url, null,
+            { response ->
+                try {
+                    // Format for parsing timestamps from server
+                    val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", Locale.ENGLISH)
 
-                        // Build a customer object for each item in the response
-                        val customers: MutableList<Customer> = ArrayList()
-                        val value = response.getJSONArray("value")
-                        for (i in 0 until value.length()) {
-                            val j = value.getJSONObject(i)
-                            val customer = Customer()
-                            customer.name = j.getString("Name")
-                            customer.number = j.getString("Number")
-                            customer.id = j.getInt("Id")
-                            val createdAt = dfServer.parse(j.getString("CreatedAt"))
-                            customer.createdAt = createdAt
-                            customers.add(customer)
-                        }
-
-                        // Update the list of customers and configure the spinner
-                        val adapter = ArrayAdapter(this,
-                                android.R.layout.simple_spinner_dropdown_item, customers)
-                        spinnerMCustomer!!.adapter = adapter
-                        spinnerMCustomer!!.onItemSelectedListener = object : OnItemSelectedListener {
-                            override fun onItemSelected(parent: AdapterView<*>?, view: View,
-                                                        position: Int, id: Long) {
-                                // Store the selected item
-                                val sid = spinnerMCustomer!!.selectedItemPosition
-                                selectedCustomer = customers[sid]
-                                Log.i(TAG, selectedCustomer!!.name)
-
-                                // Refresh job list
-                                refreshJobs()
-                            }
-
-                            override fun onNothingSelected(parent: AdapterView<*>?) {
-                                // Do nothing
-                            }
-                        }
-                    } catch (e: JSONException) {
-                        showDialog("Could not understand the response from the server, please try again.")
-                    } catch (e: ParseException) {
-                        showDialog("Could not understand the response from the server, please try again.")
+                    // Build a customer object for each item in the response
+                    val customers: MutableList<Customer> = ArrayList()
+                    for (i in 0 until response.length()) {
+                        val j = response.getJSONObject(i)
+                        val customer = Customer()
+                        customer.name = j.getString("Name")
+                        customer.number = j.getString("Number")
+                        customer.id = j.getInt("Id")
+                        val createdAt = dfServer.parse(j.getString("CreatedAt"))
+                        customer.createdAt = createdAt
+                        customers.add(customer)
                     }
-                }, Response.ErrorListener { error: VolleyError ->
-            val response = error.networkResponse
-            when (response.statusCode) {
-                else -> showDialog("Could not reach the server, please try again.")
-            }
-        }
-        ) {
-            override fun getHeaders(): Map<String, String> {
-                val headers = HashMap<String, String>()
-                headers["Content-Type"] = "application/json"
-                val authExpiration = (application as MyApplication).authExpiration
-                val authToken = (application as MyApplication).authToken
-                val authUserId = (application as MyApplication).authUserId
-                if (authExpiration != null && authExpiration.isNotEmpty() && authToken != null && authToken.isNotEmpty() && authUserId != null && authUserId.isNotEmpty()) {
-                    headers["AUTH_EXPIRATION"] = authExpiration
-                    headers["AUTH_TOKEN"] = authToken
-                    headers["AUTH_USER_ID"] = authUserId
+
+                    // Update the list of customers and configure the spinner
+                    val adapter = ArrayAdapter(this,
+                            android.R.layout.simple_spinner_dropdown_item, customers)
+                    spinnerMCustomer!!.adapter = adapter
+                    spinnerMCustomer!!.onItemSelectedListener = object : OnItemSelectedListener {
+                        override fun onItemSelected(parent: AdapterView<*>?, view: View,
+                                                    position: Int, id: Long) {
+                            // Store the selected item
+                            val sid = spinnerMCustomer!!.selectedItemPosition
+                            selectedCustomer = customers[sid]
+
+                            // Refresh job list
+                            refreshJobs()
+                        }
+
+                        override fun onNothingSelected(parent: AdapterView<*>?) {
+                            // Do nothing
+                        }
+                    }
+                } catch (e: JSONException) {
+                    showDialog("Could not understand the response from the server, please try again.")
+                } catch (e: ParseException) {
+                    showDialog("Could not understand the response from the server, please try again.")
                 }
-                return headers
+            }, { error ->
+                val response = error.networkResponse
+                when (response.statusCode) {
+                    else -> showDialog("Could not reach the server, please try again.")
+                }
+            }) {
+                override fun getHeaders(): Map<String, String> {
+                    return (application as MyApplication).authHeaders
+                }
             }
-        }
 
-        // Increase number of retries because we may be on a poor connection
-        val socketTimeout = 10000
-        val policy: RetryPolicy = DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
-        jsonRequest.retryPolicy = policy
+        // Increase number of retries because we may be on a poor connection.
+        request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
 
-        // Add the request to the RequestQueue
-        jsonRequest.tag = TAG
-        MySingleton.getInstance(this).addToRequestQueue(jsonRequest)
+        // Add the request to the RequestQueue.
+        request.tag = TAG
+        MySingleton.getInstance(this).addToRequestQueue(request)
     }
 
     private fun refreshJobs() {
-        val url = "https://app-brizbee-prod.azurewebsites.net/odata/Jobs?\$count=true&\$orderby=Number&\$top=20&\$skip=0&\$filter=CustomerId eq " + selectedCustomer!!.id
+        // Instantiate the RequestQueue.
+        val builder = StringBuilder()
+        builder.append("${(application as MyApplication).baseUrl}/api/Kiosk/Projects")
+            .append("?customerId=${selectedCustomer!!.id}")
 
-        val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
-                Response.Listener { response: JSONObject ->
-                    try {
-                        // Format for parsing timestamps from server
-                        val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'", Locale.ENGLISH)
+        val request: JsonArrayRequest = object : JsonArrayRequest(Method.GET, builder.toString(), null,
+            { response ->
+                try {
+                    // Format for parsing timestamps from server
+                    val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", Locale.ENGLISH)
 
-                        // Build a job object for each item in the response
-                        val jobs: MutableList<Job> = ArrayList()
-                        val value = response.getJSONArray("value")
-                        for (i in 0 until value.length()) {
-                            val j = value.getJSONObject(i)
-                            val job = Job()
-                            job.name = j.getString("Name")
-                            job.number = j.getString("Number")
-                            job.id = j.getInt("Id")
-                            val createdAt = dfServer.parse(j.getString("CreatedAt"))
-                            job.createdAt = createdAt
-                            jobs.add(job)
-                        }
-
-                        // Update the list of jobs and configure the spinner
-                        val adapter = ArrayAdapter(this,
-                                android.R.layout.simple_spinner_dropdown_item, jobs)
-                        spinnerMJob!!.adapter = adapter
-                        spinnerMJob!!.onItemSelectedListener = object : OnItemSelectedListener {
-                            override fun onItemSelected(parent: AdapterView<*>?, view: View,
-                                                        position: Int, id: Long) {
-                                // Store the selected item
-                                val sid = spinnerMJob!!.selectedItemPosition
-                                selectedJob = jobs[sid]
-                                Log.i(TAG, selectedJob!!.name)
-
-                                // Refresh task list
-                                refreshTasks()
-                            }
-
-                            override fun onNothingSelected(parent: AdapterView<*>?) {
-                                // Do nothing
-                            }
-                        }
-                    } catch (e: JSONException) {
-                        showDialog("Could not understand the response from the server, please try again.")
-                    } catch (e: ParseException) {
-                        showDialog("Could not understand the response from the server, please try again.")
+                    // Build a job object for each item in the response
+                    val jobs: MutableList<Job> = ArrayList()
+                    for (i in 0 until response.length()) {
+                        val j = response.getJSONObject(i)
+                        val job = Job()
+                        job.name = j.getString("Name")
+                        job.number = j.getString("Number")
+                        job.id = j.getInt("Id")
+                        val createdAt = dfServer.parse(j.getString("CreatedAt"))
+                        job.createdAt = createdAt
+                        jobs.add(job)
                     }
-                }, Response.ErrorListener { error: VolleyError ->
-            val response = error.networkResponse
-            when (response.statusCode) {
-                else -> showDialog("Could not reach the server, please try again.")
-            }
-        }
-        ) {
-            override fun getHeaders(): Map<String, String> {
-                val headers = HashMap<String, String>()
-                headers["Content-Type"] = "application/json"
-                val authExpiration = (application as MyApplication).authExpiration
-                val authToken = (application as MyApplication).authToken
-                val authUserId = (application as MyApplication).authUserId
-                if (authExpiration != null && authExpiration.isNotEmpty() && authToken != null && authToken.isNotEmpty() && authUserId != null && authUserId.isNotEmpty()) {
-                    headers["AUTH_EXPIRATION"] = authExpiration
-                    headers["AUTH_TOKEN"] = authToken
-                    headers["AUTH_USER_ID"] = authUserId
+
+                    // Update the list of jobs and configure the spinner
+                    val adapter = ArrayAdapter(this,
+                            android.R.layout.simple_spinner_dropdown_item, jobs)
+                    spinnerMJob!!.adapter = adapter
+                    spinnerMJob!!.onItemSelectedListener = object : OnItemSelectedListener {
+                        override fun onItemSelected(parent: AdapterView<*>?, view: View,
+                                                    position: Int, id: Long) {
+                            // Store the selected item
+                            val sid = spinnerMJob!!.selectedItemPosition
+                            selectedJob = jobs[sid]
+
+                            // Refresh task list
+                            refreshTasks()
+                        }
+
+                        override fun onNothingSelected(parent: AdapterView<*>?) {
+                            // Do nothing
+                        }
+                    }
+                } catch (e: JSONException) {
+                    showDialog("Could not understand the response from the server, please try again.")
+                } catch (e: ParseException) {
+                    showDialog("Could not understand the response from the server, please try again.")
                 }
-                return headers
+            }, { error ->
+                val response = error.networkResponse
+                when (response.statusCode) {
+                    else -> showDialog("Could not reach the server, please try again.")
+                }
+            }) {
+                override fun getHeaders(): Map<String, String> {
+                    return (application as MyApplication).authHeaders
+                }
             }
-        }
 
-        // Increase number of retries because we may be on a poor connection
-        val socketTimeout = 10000
-        val policy: RetryPolicy = DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
-        jsonRequest.retryPolicy = policy
+        // Increase number of retries because we may be on a poor connection.
+        request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
 
-        // Add the request to the RequestQueue
-        jsonRequest.tag = TAG
-        MySingleton.getInstance(this).addToRequestQueue(jsonRequest)
+        // Add the request to the RequestQueue.
+        request.tag = TAG
+        MySingleton.getInstance(this).addToRequestQueue(request)
     }
 
     private fun refreshTasks() {
-        val url = "https://app-brizbee-prod.azurewebsites.net/odata/Tasks?\$count=true&\$orderby=Number&\$top=20&\$skip=0&\$filter=JobId eq " + selectedJob!!.id
+        // Instantiate the RequestQueue.
+        val builder = StringBuilder()
+        builder.append("${(application as MyApplication).baseUrl}/api/Kiosk/Tasks")
+            .append("?projectId=${selectedJob!!.id}")
 
-        val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
-                Response.Listener { response: JSONObject ->
-                    try {
-                        // Format for parsing timestamps from server
-                        val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'", Locale.ENGLISH)
+        val request: JsonArrayRequest = object : JsonArrayRequest(Method.GET, builder.toString(), null,
+            { response ->
+                try {
+                    // Format for parsing timestamps from server
+                    val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", Locale.ENGLISH)
 
-                        // Build a task object for each item in the response
-                        val tasks: MutableList<Task> = ArrayList()
-                        val value = response.getJSONArray("value")
-                        for (i in 0 until value.length()) {
-                            val j = value.getJSONObject(i)
-                            val task = Task()
-                            task.name = j.getString("Name")
-                            task.number = j.getString("Number")
-                            task.id = j.getInt("Id")
-                            val createdAt = dfServer.parse(j.getString("CreatedAt"))
-                            task.createdAt = createdAt
-                            tasks.add(task)
-                        }
-
-                        // Update the list of tasks and configure the spinner
-                        val adapter = ArrayAdapter(this,
-                                android.R.layout.simple_spinner_dropdown_item, tasks)
-                        spinnerMTask!!.adapter = adapter
-                        spinnerMTask!!.onItemSelectedListener = object : OnItemSelectedListener {
-                            override fun onItemSelected(parent: AdapterView<*>?, view: View,
-                                                        position: Int, id: Long) {
-                                // Store the selected item
-                                val sid = spinnerMTask!!.selectedItemPosition
-                                selectedTask = tasks[sid]
-                                Log.i(TAG, selectedTask!!.name)
-                            }
-
-                            override fun onNothingSelected(parent: AdapterView<*>?) {
-                                // Do nothing
-                            }
-                        }
-                    } catch (e: JSONException) {
-                        showDialog("Could not understand the response from the server, please try again.")
-                    } catch (e: ParseException) {
-                        showDialog("Could not understand the response from the server, please try again.")
+                    // Build a task object for each item in the response
+                    val tasks: MutableList<Task> = ArrayList()
+                    for (i in 0 until response.length()) {
+                        val j = response.getJSONObject(i)
+                        val task = Task()
+                        task.name = j.getString("Name")
+                        task.number = j.getString("Number")
+                        task.id = j.getInt("Id")
+                        val createdAt = dfServer.parse(j.getString("CreatedAt"))
+                        task.createdAt = createdAt
+                        tasks.add(task)
                     }
-                }, Response.ErrorListener { error: VolleyError ->
-            val response = error.networkResponse
-            when (response.statusCode) {
-                else -> showDialog("Could not reach the server, please try again.")
-            }
-        }
-        ) {
-            override fun getHeaders(): Map<String, String> {
-                val headers = HashMap<String, String>()
-                headers["Content-Type"] = "application/json"
-                val authExpiration = (application as MyApplication).authExpiration
-                val authToken = (application as MyApplication).authToken
-                val authUserId = (application as MyApplication).authUserId
-                if (authExpiration != null && authExpiration.isNotEmpty() && authToken != null && authToken.isNotEmpty() && authUserId != null && authUserId.isNotEmpty()) {
-                    headers["AUTH_EXPIRATION"] = authExpiration
-                    headers["AUTH_TOKEN"] = authToken
-                    headers["AUTH_USER_ID"] = authUserId
+
+                    // Update the list of tasks and configure the spinner
+                    val adapter = ArrayAdapter(this,
+                            android.R.layout.simple_spinner_dropdown_item, tasks)
+                    spinnerMTask!!.adapter = adapter
+                    spinnerMTask!!.onItemSelectedListener = object : OnItemSelectedListener {
+                        override fun onItemSelected(parent: AdapterView<*>?, view: View,
+                                                    position: Int, id: Long) {
+                            // Store the selected item
+                            val sid = spinnerMTask!!.selectedItemPosition
+                            selectedTask = tasks[sid]
+                        }
+
+                        override fun onNothingSelected(parent: AdapterView<*>?) {
+                            // Do nothing
+                        }
+                    }
+                } catch (e: JSONException) {
+                    showDialog("Could not understand the response from the server, please try again.")
+                } catch (e: ParseException) {
+                    showDialog("Could not understand the response from the server, please try again.")
                 }
-                return headers
+            }, { error ->
+                val response = error.networkResponse
+                when (response.statusCode) {
+                    else -> showDialog("Could not reach the server, please try again.")
+                }
+            }) {
+                override fun getHeaders(): Map<String, String> {
+                    return (application as MyApplication).authHeaders
+                }
             }
-        }
 
-        // Increase number of retries because we may be on a poor connection
-        val socketTimeout = 10000
-        val policy: RetryPolicy = DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
-        jsonRequest.retryPolicy = policy
+        // Increase number of retries because we may be on a poor connection.
+        request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
 
-        // Add the request to the RequestQueue
-        jsonRequest.tag = TAG
-        MySingleton.getInstance(this).addToRequestQueue(jsonRequest)
+        // Add the request to the RequestQueue.
+        request.tag = TAG
+        MySingleton.getInstance(this).addToRequestQueue(request)
     }
 
     private fun save() {
-        val intent = Intent(this, StatusActivity::class.java)
+        runOnUiThread {
+            // Prepare a progress dialog.
+            val builder = AlertDialog.Builder(this)
+            builder.setMessage("Working")
+            builder.setCancelable(false)
+            progressDialog = builder.create()
+            progressDialog?.setCancelable(false)
+            progressDialog?.setCanceledOnTouchOutside(false)
+            progressDialog?.show()
+        }
+
         val minutes = selectedMinute + selectedHour * 60
         val enteredAt = editDate?.text
 
-        val url = "https://app-brizbee-prod.azurewebsites.net/odata/TimesheetEntries/Default.Add"
-        val jsonBody = JSONObject()
-        try {
-            jsonBody.put("TaskId", selectedTask!!.id)
-            jsonBody.put("Minutes", minutes)
-            jsonBody.put("EnteredAt", enteredAt)
-            jsonBody.put("Notes", "")
-        } catch (e: JSONException) {
-            showDialog("Could not prepare the request to the server, please try again.")
-        }
-        val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.POST, url, jsonBody,
-            Response.Listener {
-                // Take the user to the status activity
-                startActivity(intent)
-                finish() // prevents going back
-            }, Response.ErrorListener { error ->
-                val response = error.networkResponse
-                when (response.statusCode) {
-                    else -> {
-                        val content = String(response.data)
-                        Log.w(TAG, content)
-                        showDialog("Could not reach the server, please try again.")
+        val intent = Intent(this, StatusActivity::class.java)
+
+        // Instantiate the RequestQueue.
+        val builder = StringBuilder()
+        builder.append("${(application as MyApplication).baseUrl}/api/Kiosk/Timecard")
+            .append("?taskId=${selectedTask!!.id}")
+            .append("&minutes=${minutes}")
+            .append("&enteredAt=${enteredAt}")
+
+        val request: JsonObjectRequest = object : JsonObjectRequest(Method.POST, builder.toString(), null,
+            { response ->
+                runOnUiThread {
+                    progressDialog?.dismiss()
+                    startActivity(intent)
+                    finish()
+                }
+            }, { error ->
+                runOnUiThread {
+                    val response = error.networkResponse
+                    when (response.statusCode) {
+                        400 -> {
+                            progressDialog?.dismiss()
+                            val data = JSONObject(String(response.data))
+                            showDialog(data.getString("Message"))
+                        }
+                        else -> {
+                            progressDialog?.dismiss()
+                            showDialog("Could not reach the server, please try again.")
+                        }
                     }
                 }
-            }
-        ) {
-            @Throws(AuthFailureError::class)
-            override fun getHeaders(): Map<String, String> {
-                val headers = HashMap<String, String>()
-                headers["Content-Type"] = "application/json"
-                val authExpiration = (application as MyApplication).authExpiration
-                val authToken = (application as MyApplication).authToken
-                val authUserId = (application as MyApplication).authUserId
-                if (authExpiration != null && authExpiration.isNotEmpty() && authToken != null && authToken.isNotEmpty() && authUserId != null && authUserId.isNotEmpty()) {
-                    headers["AUTH_EXPIRATION"] = authExpiration
-                    headers["AUTH_TOKEN"] = authToken
-                    headers["AUTH_USER_ID"] = authUserId
+            }) {
+                override fun getHeaders(): Map<String, String> {
+                    return (application as MyApplication).authHeaders
                 }
-                return headers
             }
-        }
 
-        // Increase number of retries because we may be on a poor connection
-        val socketTimeout = 10000
-        val policy: RetryPolicy = DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
-        jsonRequest.retryPolicy = policy
+        // Increase number of retries because we may be on a poor connection.
+        request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
 
-        // Add the request to the RequestQueue
-        jsonRequest.tag = TAG
-        MySingleton.getInstance(this).addToRequestQueue(jsonRequest)
+        // Add the request to the RequestQueue.
+        request.tag = TAG
+        MySingleton.getInstance(this).addToRequestQueue(request)
     }
 
     private fun showDialog(message: String) {
-        // Build a dialog with the given message to show the user
-        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
-        builder.setMessage(message)
-                .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-        val dialog = builder.create()
-        dialog.show()
+        runOnUiThread {
+            // Build a dialog with the given message to show the user
+            val builder = AlertDialog.Builder(this)
+            builder.setMessage(message)
+                .setPositiveButton(
+                    "OK"
+                ) { dialog, _ -> dialog.dismiss() }
+            val dialog = builder.create()
+            dialog.show()
+        }
     }
 }

@@ -39,7 +39,7 @@
             android:layout_marginRight="24dp"
             android:ems="10"
             android:autofillHints=""
-            android:hint="Email Address"
+            android:hint="@string/fragment_login_email_hint_email_address"
             android:inputType="textEmailAddress"
             android:singleLine="true"
             app:layout_constraintEnd_toEndOf="parent"
@@ -57,7 +57,7 @@
             android:layout_marginRight="24dp"
             android:ems="10"
             android:autofillHints=""
-            android:hint="Password"
+            android:hint="@string/fragment_login_email_hint_password"
             android:inputType="textPassword"
             android:singleLine="true"
             app:layout_constraintEnd_toEndOf="parent"
@@ -81,17 +81,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/editPassword" />
 
-        <ProgressBar
-            android:id="@+id/login_email_fragment_progress"
-            style="?android:attr/progressBarStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/buttonLogin"
-            android:visibility="invisible" />
-
         <TextView
             android:id="@+id/textMarketingLine1"
             android:layout_width="match_parent"
@@ -106,7 +95,7 @@
             android:textColor="@color/colorBrandGrayDark"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/login_email_fragment_progress" />
+            app:layout_constraintTop_toBottomOf="@id/buttonLogin" />
 
         <TextView
             android:id="@+id/textMarketingLine2"

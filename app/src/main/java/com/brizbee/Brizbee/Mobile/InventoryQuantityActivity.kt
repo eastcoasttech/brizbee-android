@@ -93,7 +93,7 @@ class InventoryQuantityActivity : AppCompatActivity() {
     fun onCancelClick(view: View?) {
         val intent = Intent(this, InventoryItemActivity::class.java)
         startActivity(intent)
-        finish() // Prevents going back
+        finish()
     }
 
     @Suppress("UNUSED_PARAMETER")

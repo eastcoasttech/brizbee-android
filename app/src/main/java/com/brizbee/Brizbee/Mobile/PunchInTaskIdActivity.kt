@@ -24,14 +24,13 @@
 package com.brizbee.Brizbee.Mobile
 
 import android.app.Activity
-import android.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.content.Intent
 import android.widget.EditText
 import com.android.volley.toolbox.JsonObjectRequest
 import org.json.JSONException
-import kotlin.Throws
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
@@ -39,10 +38,16 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.android.volley.*
 import java.util.HashMap
+import kotlin.concurrent.thread
 
 class PunchInTaskIdActivity : AppCompatActivity() {
     private var buttonScan: Button? = null
     private var editTaskNumber: EditText? = null
+    var progressDialog: AlertDialog? = null
+
+    companion object {
+        val TAG = PunchInTaskIdActivity::class.qualifiedName
+    }
 
     private val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -50,7 +55,9 @@ class PunchInTaskIdActivity : AppCompatActivity() {
             editTaskNumber?.setText(scanContent)
 
             // Verify that the barcode is valid.
-            confirm()
+            thread(start = true) {
+                confirm()
+            }
         }
     }
 
@@ -78,77 +85,89 @@ class PunchInTaskIdActivity : AppCompatActivity() {
     fun onCancelClick(view: View?) {
         val intent = Intent(this, StatusActivity::class.java)
         startActivity(intent)
-
-        // Prevent going back.
         finish()
     }
 
     @Suppress("UNUSED_PARAMETER")
     fun onContinueClick(view: View?) {
-        confirm()
+        thread(start = true) {
+            confirm()
+        }
     }
 
     private fun confirm() {
+        runOnUiThread {
+            // Prepare a progress dialog.
+            val builder = AlertDialog.Builder(this)
+            builder.setMessage("Working")
+            builder.setCancelable(false)
+            progressDialog = builder.create()
+            progressDialog?.setCancelable(false)
+            progressDialog?.setCanceledOnTouchOutside(false)
+            progressDialog?.show()
+        }
+
         // Lookup the task number.
-        val intent = Intent(this, PunchInConfirmActivity::class.java)
         val editTaskNumber = findViewById<EditText>(R.id.editTaskNumber)
 
-        // Instantiate the RequestQueue
-        val url = String.format(
-            "https://app-brizbee-prod.azurewebsites.net/odata/Tasks/Default.Search(Number='%s')",
-            editTaskNumber.text
-        )
-        val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(
-            Method.GET, url, null, Response.Listener { response ->
-                try {
-                    if (response == null)
-                        // Notify the user that the task number does not exist
-                        showDialog("That's not a valid task number, please try again.")
+        // Instantiate the RequestQueue.
+        val url = "${(application as MyApplication).baseUrl}/api/Kiosk/SearchTasks?taskNumber=${editTaskNumber.text}"
 
-                    // Pass the task as a string
-                    intent.putExtra("task", response.toString())
-                    startActivity(intent)
-                } catch (e: JSONException) {
-                    showDialog("Could not understand the response from the server, please try again.")
+        val request: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
+            { response ->
+                runOnUiThread {
+                    try {
+                        if (response == null) {
+                            // Notify the user that the task number does not exist
+                            showDialog("That's not a valid task number, please try again.")
+                        }
+
+                        val intent = Intent(this, PunchInConfirmActivity::class.java)
+
+                        // Pass the task as a string
+                        intent.putExtra("task", response.toString())
+                        startActivity(intent)
+                    } catch (e: JSONException) {
+                        runOnUiThread {
+                            progressDialog?.dismiss()
+                            showDialog("Could not understand the response from the server, please try again.")
+                        }
+                    }
                 }
-            },
-            Response.ErrorListener { error ->
-                val response = error.networkResponse
-                when (response.statusCode) {
-                    else -> showDialog("Could not reach the server, please try again.")
+            }, { error ->
+                runOnUiThread {
+                    val response = error.networkResponse
+                    when (response.statusCode) {
+                        else -> {
+                            progressDialog?.dismiss()
+                            showDialog("Could not reach the server, please try again.")
+                        }
+                    }
                 }
             }) {
-            @Throws(AuthFailureError::class)
-            override fun getHeaders(): Map<String, String> {
-                val headers = HashMap<String, String>()
-                headers["Content-Type"] = "application/json"
-                val authExpiration = (application as MyApplication).authExpiration
-                val authToken = (application as MyApplication).authToken
-                val authUserId = (application as MyApplication).authUserId
-                if (authExpiration != null && authExpiration.isNotEmpty() && authToken != null && authToken.isNotEmpty() && authUserId != null && authUserId.isNotEmpty()) {
-                    headers["AUTH_EXPIRATION"] = authExpiration
-                    headers["AUTH_TOKEN"] = authToken
-                    headers["AUTH_USER_ID"] = authUserId
+                override fun getHeaders(): Map<String, String> {
+                    return (application as MyApplication).authHeaders
                 }
-                return headers
             }
-        }
-        val socketTimeout = 10000
-        val policy: RetryPolicy =
-            DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
-        jsonRequest.retryPolicy = policy
+
+        // Increase number of retries because we may be on a poor connection.
+        request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
 
         // Add the request to the RequestQueue.
-        MySingleton.getInstance(this).addToRequestQueue(jsonRequest)
+        request.tag = TAG
+        MySingleton.getInstance(this).addToRequestQueue(request)
     }
 
     private fun showDialog(message: String) {
-        // Build a dialog with the given message to show the user.
-        val builder = AlertDialog.Builder(this)
-        builder
-            .setMessage(message)
-            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-        val dialog = builder.create()
-        dialog.show()
+        runOnUiThread {
+            // Build a dialog with the given message to show the user
+            val builder = AlertDialog.Builder(this)
+            builder.setMessage(message)
+                .setPositiveButton(
+                    "OK"
+                ) { dialog, _ -> dialog.dismiss() }
+            val dialog = builder.create()
+            dialog.show()
+        }
     }
 }

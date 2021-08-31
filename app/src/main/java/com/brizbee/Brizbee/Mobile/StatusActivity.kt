@@ -25,6 +25,7 @@ package com.brizbee.Brizbee.Mobile
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -35,6 +36,7 @@ import com.android.volley.*
 import com.android.volley.toolbox.JsonObjectRequest
 import org.json.JSONException
 import org.json.JSONObject
+import java.lang.NullPointerException
 import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -42,11 +44,6 @@ import java.util.*
 import kotlin.jvm.Throws
 
 class StatusActivity : AppCompatActivity() {
-
-    companion object {
-        val TAG = StatusActivity::class.qualifiedName
-    }
-
     private var textHello: TextView? = null
     private var textStatus: TextView? = null
     private var textTask: TextView? = null
@@ -64,6 +61,10 @@ class StatusActivity : AppCompatActivity() {
     private var buttonManualEntry: Button? = null
     private var buttonInventory: Button? = null
     private var isTimeCardEnabled: Boolean = false
+
+    companion object {
+        val TAG = StatusActivity::class.qualifiedName
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -128,18 +129,19 @@ class StatusActivity : AppCompatActivity() {
     }
 
     private fun loadStatus() {
-        val url = "https://app-brizbee-prod.azurewebsites.net/odata/Punches/Default.Current?\$expand=Task(\$expand=Job(\$expand=Customer))"
 
-        val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
-            Response.Listener { response: JSONObject ->
+        // Instantiate the RequestQueue.
+        val url = "${(application as MyApplication).baseUrl}/api/Kiosk/Punches/Current"
+
+        val request: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
+            { response ->
                 try {
                     // Format for parsing timestamps from server
                     val dfServer: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH)
                     val dfHuman: DateFormat = SimpleDateFormat("MMM dd, yyyy h:mma", Locale.ENGLISH)
-                    val value = response.getJSONArray("value")
-                    if (value.length() > 0) {
-                        val first = value.getJSONObject(0)
-                        val task = first.getJSONObject("Task")
+
+                    if (response.length() > 0) {
+                        val task = response.getJSONObject("Task")
                         val job = task.getJSONObject("Job")
                         val customer = job.getJSONObject("Customer")
 
@@ -171,9 +173,9 @@ class StatusActivity : AppCompatActivity() {
                         textJob!!.visibility = View.VISIBLE
 
                         // Format the since timestamp
-                        val since = dfServer.parse(first.getString("InAt"))
+                        val since = dfServer.parse(response.getString("InAt"))
                         textSince!!.text = dfHuman.format(since!!)
-                        textTimeZone!!.text = first.getString("InAtTimeZone")
+                        textTimeZone!!.text = response.getString("InAtTimeZone")
                         textSinceHeader!!.visibility = View.VISIBLE
                         textSince!!.visibility = View.VISIBLE
                         textTimeZone!!.visibility = View.VISIBLE
@@ -206,64 +208,56 @@ class StatusActivity : AppCompatActivity() {
                 } catch (e: ParseException) {
                     showDialog("Could not understand the response from the server, please try again.")
                 }
-            },
-            Response.ErrorListener { error: VolleyError ->
-                val response = error.networkResponse
-                when (response.statusCode) {
-                    else -> showDialog("Could not reach the server, please try again.")
+            }, { error ->
+                runOnUiThread {
+                    val response = error.networkResponse
+                    when (response.statusCode) {
+                        else -> {
+                            showDialog("Could not reach the server, please try again.")
+                        }
+                    }
+                }
+            }) {
+                override fun getHeaders(): Map<String, String> {
+                    return (application as MyApplication).authHeaders
                 }
             }
-        ) {
-            @Throws(AuthFailureError::class)
-            override fun getHeaders(): Map<String, String> {
-                val headers = HashMap<String, String>()
-                headers["Content-Type"] = "application/json"
-                val authExpiration = (application as MyApplication).authExpiration
-                val authToken = (application as MyApplication).authToken
-                val authUserId = (application as MyApplication).authUserId
-                if (authExpiration != null && !authExpiration.isEmpty() && authToken != null && !authToken.isEmpty() && authUserId != null && !authUserId.isEmpty()) {
-                    headers["AUTH_EXPIRATION"] = authExpiration
-                    headers["AUTH_TOKEN"] = authToken
-                    headers["AUTH_USER_ID"] = authUserId
-                }
-                return headers
-            }
-        }
 
-        // Increase number of retries because we may be on a poor connection
-        val socketTimeout = 10000
-        val policy: RetryPolicy = DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
-        jsonRequest.retryPolicy = policy
+        // Increase number of retries because we may be on a poor connection.
+        request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
 
-        // Add the request to the RequestQueue
-        jsonRequest.tag = TimeCardActivity.TAG
-        MySingleton.getInstance(this).addToRequestQueue(jsonRequest)
+        // Add the request to the RequestQueue.
+        request.tag = TAG
+        MySingleton.getInstance(this).addToRequestQueue(request)
     }
 
     private fun loadUser() {
         val user = (application as MyApplication).user
-        if (user != null) {
-            textHello!!.text = String.format("Hello, %s", user.name)
 
-            // Logout immediately if the user is not allowed to use mobile app.
-            if (!user.usesMobileClock)
-            {
-                val intent = Intent(this, LoginActivity::class.java)
-                startActivity(intent)
-                finish() // prevents back
-            }
+        textHello!!.text = String.format("Hello, %s", user.name)
 
-            // Determine if user can enter time cards.
-            isTimeCardEnabled = user.usesTimesheets
+        // Logout immediately if the user is not allowed to use mobile app.
+        if (!user.usesMobileClock)
+        {
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
+            finish() // prevents back
         }
+
+        // Determine if user can enter time cards.
+        isTimeCardEnabled = user.usesTimesheets
     }
 
     private fun showDialog(message: String) {
-        // Build a dialog with the given message to show the user
-        val builder = AlertDialog.Builder(this)
-        builder.setMessage(message)
-                .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-        val dialog = builder.create()
-        dialog.show()
+        runOnUiThread {
+            // Build a dialog with the given message to show the user
+            val builder = AlertDialog.Builder(this)
+            builder.setMessage(message)
+                .setPositiveButton(
+                    "OK"
+                ) { dialog, _ -> dialog.dismiss() }
+            val dialog = builder.create()
+            dialog.show()
+        }
     }
 }

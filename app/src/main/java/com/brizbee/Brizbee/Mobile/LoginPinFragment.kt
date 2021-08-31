@@ -25,6 +25,7 @@ package com.brizbee.Brizbee.Mobile
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,6 +35,7 @@ import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.android.volley.*
+import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.brizbee.Brizbee.Mobile.models.Organization
 import com.brizbee.Brizbee.Mobile.models.TimeZone
@@ -51,7 +53,11 @@ class LoginPinFragment : Fragment() {
     private var editOrganizationCode: EditText? = null
     private var editUserPin: EditText? = null
     private var buttonLogin: Button? = null
-    private var progressBar: ProgressBar? = null
+    var progressDialog: AlertDialog? = null
+
+    companion object {
+        val TAG = LoginPinFragment::class.qualifiedName
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         application = requireActivity().application as MyApplication
@@ -61,10 +67,9 @@ class LoginPinFragment : Fragment() {
         editOrganizationCode = view.findViewById(R.id.editOrganizationCode)
         editUserPin = view.findViewById(R.id.editUserPin)
         buttonLogin = view.findViewById(R.id.buttonLogin)
-        progressBar = view.findViewById(R.id.login_pin_fragment_progress)
 
         // Set the click listener
-        buttonLogin?.setOnClickListener({ v -> onLoginClick(v) })
+        buttonLogin?.setOnClickListener { v -> onLoginClick(v) }
 
         // Focus on the organization code
         editOrganizationCode?.clearFocus()
@@ -81,27 +86,29 @@ class LoginPinFragment : Fragment() {
     }
 
     private fun login() {
-        setEnabled(false) // Disable the form
+        activity?.runOnUiThread {
+            // Prepare a progress dialog.
+            val builder = AlertDialog.Builder(requireActivity())
+            builder.setMessage("Working")
+            builder.setCancelable(false)
+            progressDialog = builder.create()
+            progressDialog?.setCancelable(false)
+            progressDialog?.setCanceledOnTouchOutside(false)
+            progressDialog?.show()
+        }
 
         val organizationCode = editOrganizationCode?.text.toString()
         val userPin = editUserPin?.text.toString()
-        val url = "https://app-brizbee-prod.azurewebsites.net/odata/Users/Default.Authenticate"
+        val url = "${application?.baseUrl}/api/Auth/Authenticate"
 
-        // Request a string response from the provided URL
+        // Request a string response from the provided URL.
         val jsonBody = JSONObject()
-        try {
-            val session = JSONObject()
-            session.put("PinOrganizationCode", organizationCode)
-            session.put("PinUserPin", userPin)
-            session.put("Method", "pin")
-            jsonBody.put("Session", session)
-        } catch (e: JSONException) {
-            showDialog("Could not prepare the request to the server, please try again.")
-            setEnabled(true) // Enable the form
-        }
+        jsonBody.put("PinOrganizationCode", organizationCode)
+        jsonBody.put("PinUserPin", userPin)
+        jsonBody.put("Method", "pin")
 
-        val jsonRequest = JsonObjectRequest(
-            Request.Method.POST, url, jsonBody, { response ->
+        val request = JsonObjectRequest(Request.Method.POST, url, jsonBody,
+            { response ->
                 try {
                     val authUserId = response.getString("AuthUserId")
                     val authToken = response.getString("AuthToken")
@@ -114,31 +121,34 @@ class LoginPinFragment : Fragment() {
 
                     // Load metadata
                     timeZones
-                    getUserAndOrganization(authUserId.toInt())
+                    getUserAndOrganization()
                 } catch (e: JSONException) {
-                    showDialog("Could not understand the response from the server, please try again.")
-                    setEnabled(true) // Enable the form
+                    activity?.runOnUiThread {
+                        progressDialog?.dismiss()
+                        showDialog("Could not understand the response from the server, please try again.")
+                    }
                 }
             }) { error ->
-                val response = error.networkResponse
-                if (response?.data != null) {
+                activity?.runOnUiThread {
+                    val response = error.networkResponse
                     when (response.statusCode) {
-                        400 -> showDialog("Not a valid organization code and PIN number, please try again.")
-                        else -> showDialog("Could not reach the server, please try again.")
+                        400 -> {
+                            progressDialog?.dismiss()
+                            showDialog("Not a valid organization code and PIN number, please try again.")
+                        }
+                        else -> {
+                            progressDialog?.dismiss()
+                            showDialog("Could not reach the server, please try again.")
+                        }
                     }
-                } else {
-                    showDialog("Could not reach the server, please try again.")
                 }
-                setEnabled(true) // Enable the form
             }
 
-        // Increase number of retries because we may be on a poor connection
-        val socketTimeout = 10000
-        val policy: RetryPolicy = DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
-        jsonRequest.retryPolicy = policy
+        // Increase number of retries because we may be on a poor connection.
+        request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
 
-        // Add the request to the RequestQueue
-        MySingleton.getInstance(this.activity).addToRequestQueue(jsonRequest)
+        // Add the request to the RequestQueue.
+        MySingleton.getInstance(activity).addToRequestQueue(request)
     }
 
     val authHeaders: HashMap<String, String>
@@ -156,63 +166,59 @@ class LoginPinFragment : Fragment() {
             return headers
         }
 
-    // Store user in application variable
     private val timeZones: Unit
         get() {
-            val url = "https://app-brizbee-prod.azurewebsites.net/odata/Organizations/Default.Timezones"
-            val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(
-                Method.GET, url, null,
-                Response.Listener { response ->
+            val url = "${application?.baseUrl}/api/Kiosk/TimeZones"
+            val request: JsonArrayRequest = object : JsonArrayRequest(Method.GET, url, null,
+                { response ->
                     try {
-                        val value = response.getJSONArray("value")
-                        val timezones = arrayOfNulls<TimeZone>(value.length())
-                        for (i in 0 until value.length()) {
+                        val timezones = arrayOfNulls<TimeZone>(response.length())
+                        for (i in 0 until response.length()) {
                             val zone = TimeZone()
-                            zone.countryCode = value.getJSONObject(i).getString("CountryCode")
-                            zone.id = value.getJSONObject(i).getString("Id")
+                            zone.countryCode = response.getJSONObject(i).getString("CountryCode")
+                            zone.id = response.getJSONObject(i).getString("Id")
                             timezones[i] = zone
                         }
 
                         // Store user in application variable
                         application?.timeZones = timezones
                     } catch (e: JSONException) {
-                        showDialog("Could not understand the response from the server, please try again.")
-                        setEnabled(true) // Enable the form
+                        activity?.runOnUiThread {
+                            progressDialog?.dismiss()
+                            showDialog("Could not understand the response from the server, please try again.")
+                        }
                     }
-                },
-                Response.ErrorListener { error ->
-                    val response = error.networkResponse
-                    when (response.statusCode) {
-                        else -> showDialog("Could not reach the server, please try again.")
+                }, { error ->
+                    activity?.runOnUiThread {
+                        val response = error.networkResponse
+                        when (response.statusCode) {
+                            else -> {
+                                progressDialog?.dismiss()
+                                showDialog("Could not reach the server, please try again.")
+                            }
+                        }
                     }
-                    setEnabled(true) // Enable the form
                 }) {
-                @Throws(AuthFailureError::class)
-                override fun getHeaders(): Map<String, String> {
-                    return authHeaders
+                    override fun getHeaders(): Map<String, String> {
+                        return authHeaders
+                    }
                 }
-            }
 
-            // Increase number of retries because we may be on a poor connection
-            val socketTimeout = 10000
-            val policy: RetryPolicy = DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
-            jsonRequest.retryPolicy = policy
+            // Increase number of retries because we may be on a poor connection.
+            request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
 
-            // Add the request to the RequestQueue
-            MySingleton.getInstance(this.activity).addToRequestQueue(jsonRequest)
+            // Add the request to the RequestQueue.
+            MySingleton.getInstance(activity).addToRequestQueue(request)
         }
 
-    private fun getUserAndOrganization(userId: Int) {
+    private fun getUserAndOrganization() {
         val intent = Intent(activity, StatusActivity::class.java)
-        val url = String.format("https://app-brizbee-prod.azurewebsites.net/odata/Users(%d)?\$expand=Organization", userId)
-        val jsonRequest: JsonObjectRequest = object : JsonObjectRequest(
-            Method.GET,
-            url,
-            null,
-            Response.Listener { response: JSONObject ->
+        val url = "${application?.baseUrl}/api/Auth/Me"
+        val request: JsonObjectRequest = object : JsonObjectRequest(Method.GET, url, null,
+            { response ->
                 try {
                     // Format for parsing timestamps from server
-                    val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.ENGLISH)
+                    val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", Locale.ENGLISH)
                     val user = User()
                     user.createdAt = df.parse(response.getString("CreatedAt"))
                     user.emailAddress = response.getString("EmailAddress")
@@ -228,58 +234,47 @@ class LoginPinFragment : Fragment() {
                     organization.id = organizationJson.getInt("Id")
                     organization.name = organizationJson.getString("Name")
 
-                    // Store user in application variable
+                    // Store user in application variable.
                     application?.user = user
                     application?.organization = organization
 
                     activity?.runOnUiThread {
+                        progressDialog?.dismiss()
                         startActivity(intent)
                         activity?.finish() // Prevents going back
                     }
                 } catch (e: JSONException) {
-                    showDialog("Could not understand the response from the server, please try again.")
-                    setEnabled(true) // Enable the form
+                    activity?.runOnUiThread {
+                        progressDialog?.dismiss()
+                        showDialog("Could not understand the response from the server, please try again.")
+                    }
                 } catch (e: ParseException) {
-                    showDialog("Could not understand the response from the server, please try again.")
-                    setEnabled(true) // Enable the form
+                    activity?.runOnUiThread {
+                        progressDialog?.dismiss()
+                        showDialog("Could not understand the response from the server, please try again.")
+                    }
                 }
-            },
-            Response.ErrorListener { error ->
-                val response = error.networkResponse
-                when (response.statusCode) {
-                    else -> showDialog("Could not reach the server, please try again.")
+            }, { error ->
+                activity?.runOnUiThread {
+                    val response = error.networkResponse
+                    when (response.statusCode) {
+                        else -> {
+                            progressDialog?.dismiss()
+                            showDialog("Could not reach the server, please try again.")
+                        }
+                    }
                 }
-                setEnabled(true) // Enable the form
             }) {
-            @Throws(AuthFailureError::class)
-            override fun getHeaders(): Map<String, String> {
-                return authHeaders
+                override fun getHeaders(): Map<String, String> {
+                    return authHeaders
+                }
             }
-        }
 
-        // Increase number of retries because we may be on a poor connection
-        val socketTimeout = 10000
-        val policy: RetryPolicy = DefaultRetryPolicy(socketTimeout, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
-        jsonRequest.retryPolicy = policy
+        // Increase number of retries because we may be on a poor connection.
+        request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
 
-        // Add the request to the RequestQueue
-        MySingleton.getInstance(activity).addToRequestQueue(jsonRequest)
-    }
-
-    fun setEnabled(enabled: Boolean) {
-        activity?.runOnUiThread {
-            editOrganizationCode?.isEnabled = enabled
-            editUserPin?.isEnabled = enabled
-            buttonLogin?.isEnabled = enabled
-
-            if (enabled) {
-                progressBar?.visibility = View.INVISIBLE
-                buttonLogin?.visibility = View.VISIBLE
-            } else {
-                progressBar?.visibility = View.VISIBLE
-                buttonLogin?.visibility = View.INVISIBLE
-            }
-        }
+        // Add the request to the RequestQueue.
+        MySingleton.getInstance(activity).addToRequestQueue(request)
     }
 
     private fun showDialog(message: String) {

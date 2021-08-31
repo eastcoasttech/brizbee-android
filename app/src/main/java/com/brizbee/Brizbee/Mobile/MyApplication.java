@@ -29,6 +29,8 @@ import com.brizbee.Brizbee.Mobile.models.Organization;
 import com.brizbee.Brizbee.Mobile.models.TimeZone;
 import com.brizbee.Brizbee.Mobile.models.User;
 
+import java.util.HashMap;
+
 public class MyApplication extends Application {
     private String authExpiration;
     private String authToken;
@@ -36,6 +38,37 @@ public class MyApplication extends Application {
     private Organization organization;
     private TimeZone[] timeZones;
     private User user;
+
+    public HashMap<String, String> getAuthHeaders() {
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+
+        if (authExpiration != null && !authExpiration.isEmpty() &&
+                authToken != null && !authToken.isEmpty() &&
+                authUserId != null && !authUserId.isEmpty()) {
+            headers.put("AUTH_EXPIRATION", authExpiration);
+            headers.put("AUTH_TOKEN", authToken);
+            headers.put("AUTH_USER_ID", authUserId);
+        }
+
+        return headers;
+    }
+
+    public String getBaseUrl() {
+        if (baseUrl == null || baseUrl.isEmpty())
+        {
+//            return "https://app-brizbee-prod.azurewebsites.net";
+            return "https://app-brizbee-api-test.azurewebsites.net";
+        }
+
+        return baseUrl;
+    }
+
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
+    private String baseUrl;
 
     public String getAuthExpiration() {
         return authExpiration;
