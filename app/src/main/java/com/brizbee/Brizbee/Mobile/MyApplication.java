@@ -57,8 +57,7 @@ public class MyApplication extends Application {
     public String getBaseUrl() {
         if (baseUrl == null || baseUrl.isEmpty())
         {
-//            return "https://app-brizbee-prod.azurewebsites.net";
-            return "https://app-brizbee-api-test.azurewebsites.net";
+            return "https://app-brizbee-prod.azurewebsites.net";
         }
 
         return baseUrl;
