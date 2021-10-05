@@ -5,7 +5,6 @@
     <uses-feature android:name='android.hardware.camera' />
     <uses-permission android:name='android.permission.CAMERA' />
     <uses-permission android:name='android.permission.INTERNET' />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
@@ -18,7 +17,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:hardwareAccelerated="true">
-        <activity android:name=".LoginActivity" android:theme="@style/AppTheme.NoActionBar" android:exported="false">
+        <activity android:name=".LoginActivity" android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
