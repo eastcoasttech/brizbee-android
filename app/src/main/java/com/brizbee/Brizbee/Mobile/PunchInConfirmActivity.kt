@@ -31,10 +31,7 @@ import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Spinner
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -53,6 +50,7 @@ class PunchInConfirmActivity : AppCompatActivity() {
     private var textConfirmTask: TextView? = null
     private var textConfirmCustomer: TextView? = null
     private var textConfirmJob: TextView? = null
+    private var buttonConfirmInContinue: Button? = null
     private var task: JSONObject? = null
     private var job: JSONObject? = null
     private var customer: JSONObject? = null
@@ -77,6 +75,7 @@ class PunchInConfirmActivity : AppCompatActivity() {
         textConfirmTask = findViewById(R.id.textConfirmTask)
         textConfirmCustomer = findViewById(R.id.textConfirmCustomer)
         textConfirmJob = findViewById(R.id.textConfirmJob)
+        buttonConfirmInContinue = findViewById(R.id.buttonConfirmInContinue)
 
         try {
             task = JSONObject(intent.getStringExtra("task")!!)
@@ -154,9 +153,13 @@ class PunchInConfirmActivity : AppCompatActivity() {
 
     @Suppress("UNUSED_PARAMETER")
     fun onContinueClick(view: View?) {
-        thread(start = true) {
-            getLocation()
+        if (buttonConfirmInContinue?.isEnabled == true) {
+            thread(start = true) {
+                getLocation()
+            }
         }
+
+        buttonConfirmInContinue?.isEnabled = false // Prevent double submission
     }
 
     private fun getLocation() {
@@ -192,6 +195,8 @@ class PunchInConfirmActivity : AppCompatActivity() {
                 runOnUiThread {
                     Log.i(TAG, "Location is not enabled and is required by BRIZBEE")
                     showDialog("Location is not enabled but is required by BRIZBEE")
+
+                    buttonConfirmInContinue?.isEnabled = true // Return control to user
                 }
                 return
             }
@@ -209,7 +214,7 @@ class PunchInConfirmActivity : AppCompatActivity() {
                         Log.i(TAG, "Saving without location because location cannot be acquired")
 
                         runOnUiThread {
-                            progressDialog?.dismiss()
+                            progressDialog?.dismiss() // No need to return control to user
                         }
 
                         save()
@@ -217,19 +222,19 @@ class PunchInConfirmActivity : AppCompatActivity() {
                         return
                     }
 
+                    // Stop getting location updates.
+                    fusedLocationClient!!.removeLocationUpdates(locationCallback!!)
+
                     val location = locationResult.locations[0]
 
                     // Get the coordinates of the location.
                     currentLatitude = location.latitude
                     currentLongitude = location.longitude
 
-                    // Stop getting location updates.
-                    fusedLocationClient!!.removeLocationUpdates(locationCallback!!)
-
                     Log.i(TAG, "Saving with the location")
 
                     runOnUiThread {
-                        progressDialog?.dismiss()
+                        progressDialog?.dismiss() // No need to return control to user
                     }
 
                     // Save with the location.
@@ -252,8 +257,10 @@ class PunchInConfirmActivity : AppCompatActivity() {
             }
 
             // Do not continue without location permission.
-            if (!locationAllowed)
+            if (!locationAllowed) {
+                buttonConfirmInContinue?.isEnabled = true // Return control to user
                 return
+            }
 
             runOnUiThread {
                 progressDialog?.show()
@@ -270,6 +277,7 @@ class PunchInConfirmActivity : AppCompatActivity() {
 
             runOnUiThread {
                 progressDialog?.dismiss()
+                buttonConfirmInContinue?.isEnabled = true // Return control to user
             }
         }
     }

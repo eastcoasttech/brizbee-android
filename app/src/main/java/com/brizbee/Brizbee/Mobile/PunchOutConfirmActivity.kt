@@ -42,6 +42,7 @@ import android.location.LocationManager
 import android.os.Looper
 import android.util.Log
 import android.view.View
+import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.android.volley.*
@@ -52,6 +53,7 @@ import kotlin.concurrent.thread
 class PunchOutConfirmActivity : AppCompatActivity() {
     private var currentLatitude = 0.0
     private var currentLongitude = 0.0
+    private var buttonConfirmOutContinue: Button? = null
     private var locationCallback: LocationCallback? = null
     private var spinnerTimeZone: Spinner? = null
     private lateinit var timezonesIds: Array<String?>
@@ -70,6 +72,7 @@ class PunchOutConfirmActivity : AppCompatActivity() {
 
         // Get references from layouts.
         spinnerTimeZone = findViewById(R.id.spinnerTimeZone)
+        buttonConfirmOutContinue = findViewById(R.id.buttonConfirmOutContinue)
 
         // Allows getting the location.
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -121,9 +124,13 @@ class PunchOutConfirmActivity : AppCompatActivity() {
 
     @Suppress("UNUSED_PARAMETER")
     fun onContinueClick(view: View?) {
-        thread(start = true) {
-            getLocation()
+        if (buttonConfirmOutContinue?.isEnabled == true) {
+            thread(start = true) {
+                getLocation()
+            }
         }
+
+        buttonConfirmOutContinue?.isEnabled = false // Prevent double submission
     }
 
     private fun getLocation() {
@@ -159,6 +166,8 @@ class PunchOutConfirmActivity : AppCompatActivity() {
                 runOnUiThread {
                     Log.i(TAG, "Location is not enabled and is required by BRIZBEE")
                     showDialog("Location is not enabled but is required by BRIZBEE")
+
+                    buttonConfirmOutContinue?.isEnabled = true // Return control to user
                 }
                 return
             }
@@ -176,7 +185,7 @@ class PunchOutConfirmActivity : AppCompatActivity() {
                         Log.i(TAG, "Saving without location because location cannot be acquired")
 
                         runOnUiThread {
-                            progressDialog?.dismiss()
+                            progressDialog?.dismiss() // No need to return control to user
                         }
 
                         save()
@@ -184,14 +193,14 @@ class PunchOutConfirmActivity : AppCompatActivity() {
                         return
                     }
 
+                    // Stop getting location updates.
+                    fusedLocationClient!!.removeLocationUpdates(locationCallback!!)
+
                     val location = locationResult.locations[0]
 
                     // Get the coordinates of the location.
                     currentLatitude = location.latitude
                     currentLongitude = location.longitude
-
-                    // Stop getting location updates.
-                    fusedLocationClient!!.removeLocationUpdates(locationCallback!!)
 
                     Log.i(TAG, "Saving with the location")
 
@@ -219,8 +228,10 @@ class PunchOutConfirmActivity : AppCompatActivity() {
             }
 
             // Do not continue without location permission.
-            if (!locationAllowed)
+            if (!locationAllowed) {
+                buttonConfirmOutContinue?.isEnabled = true // Return control to user
                 return
+            }
 
             runOnUiThread {
                 progressDialog?.show()
@@ -237,6 +248,7 @@ class PunchOutConfirmActivity : AppCompatActivity() {
 
             runOnUiThread {
                 progressDialog?.dismiss()
+                buttonConfirmOutContinue?.isEnabled = true // Return control to user
             }
         }
     }
