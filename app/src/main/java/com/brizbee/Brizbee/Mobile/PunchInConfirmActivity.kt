@@ -144,6 +144,18 @@ class PunchInConfirmActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+        Log.i(TAG, "Stopping location updates and cancelling all queued requests")
+
+        // Ensure requests do not continue in the background.
+        MySingleton.getInstance(this).requestQueue.cancelAll(TAG)
+
+        // Stop getting location updates.
+        fusedLocationClient?.removeLocationUpdates(locationCallback)
+    }
+
     @Suppress("UNUSED_PARAMETER")
     fun onCancelClick(view: View?) {
         val intent = Intent(this, StatusActivity::class.java)
@@ -223,7 +235,7 @@ class PunchInConfirmActivity : AppCompatActivity() {
                     }
 
                     // Stop getting location updates.
-                    fusedLocationClient!!.removeLocationUpdates(locationCallback!!)
+                    fusedLocationClient?.removeLocationUpdates(locationCallback)
 
                     val location = locationResult.locations[0]
 
