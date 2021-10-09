@@ -40,7 +40,6 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.google.android.gms.location.*
 import org.json.JSONException
 import org.json.JSONObject
-import java.util.*
 import kotlin.concurrent.thread
 
 
@@ -109,6 +108,66 @@ class PunchInConfirmActivity : AppCompatActivity() {
         // Allows getting the location.
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
+        val lm = getSystemService(LOCATION_SERVICE) as LocationManager
+
+        // Check if the location service is enabled.
+        if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            Log.w(TAG, "Location services are not enabled")
+            showDialog("Location services are not enabled")
+        }
+
+        // Attempt to get location updates.
+        val locationRequest = LocationRequest.create()
+        locationRequest.interval = (5 * 1000).toLong()
+        locationRequest.fastestInterval = (1 * 1000).toLong()
+        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+                Log.d(TAG, "Location callback triggered")
+
+                if (locationResult == null) {
+                    Log.d(TAG, "Did not acquire location")
+                    return
+                }
+
+                Log.d(TAG, "Location data acquired")
+                Log.i(TAG, "Stopping location updates and getting coordinates")
+
+                // Stop getting location updates.
+                fusedLocationClient?.removeLocationUpdates(locationCallback!!)
+
+                val location = locationResult.locations[0]
+
+                // Get the coordinates of the location.
+                currentLatitude = location.latitude
+                currentLongitude = location.longitude
+            }
+        }
+
+        // Check or request permission for fine location.
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            locationAllowed = false
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+                ActivityCompat.requestPermissions(this,
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+            } else {
+                ActivityCompat.requestPermissions(this,
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+            }
+        }
+
+        thread(start = true) {
+            // Start getting location updates.
+            fusedLocationClient?.requestLocationUpdates(
+                locationRequest,
+                locationCallback!!,
+                Looper.getMainLooper()
+            )
+        }
+
         // Get timezones from application and configure spinner.
         val timezones = (application as MyApplication).timeZones
         timezonesIds = arrayOfNulls(timezones.size)
@@ -153,7 +212,7 @@ class PunchInConfirmActivity : AppCompatActivity() {
         MySingleton.getInstance(this).requestQueue.cancelAll(TAG)
 
         // Stop getting location updates.
-        fusedLocationClient?.removeLocationUpdates(locationCallback)
+        fusedLocationClient?.removeLocationUpdates(locationCallback!!)
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -167,131 +226,11 @@ class PunchInConfirmActivity : AppCompatActivity() {
     fun onContinueClick(view: View?) {
         if (buttonConfirmInContinue?.isEnabled == true) {
             thread(start = true) {
-                getLocation()
+                save()
             }
         }
 
         buttonConfirmInContinue?.isEnabled = false // Prevent double submission
-    }
-
-    private fun getLocation() {
-        var locationEnabled = true
-
-        runOnUiThread {
-            // Prepare a progress dialog.
-            val builder = AlertDialog.Builder(this)
-            builder.setMessage("Getting your location")
-            progressDialog = builder.create()
-            progressDialog?.setCancelable(false)
-            progressDialog?.setCanceledOnTouchOutside(false)
-        }
-
-        try {
-            val user = (application as MyApplication).user
-
-            // Recording current location is optional.
-            if (!user.requiresLocation) {
-                // Save without location.
-                Log.i(TAG, "Saving without location because location is not required")
-                save()
-            }
-
-            val lm = getSystemService(LOCATION_SERVICE) as LocationManager
-
-            // Check if the location service is enabled.
-            if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER))
-                locationEnabled = false
-
-            // Cannot continue so alert the user.
-            if (!locationEnabled) {
-                runOnUiThread {
-                    Log.i(TAG, "Location is not enabled and is required by BRIZBEE")
-                    showDialog("Location is not enabled but is required by BRIZBEE")
-
-                    buttonConfirmInContinue?.isEnabled = true // Return control to user
-                }
-                return
-            }
-
-            // Attempt to get location updates.
-            val locationRequest = LocationRequest.create()
-            locationRequest.interval = (5 * 1000).toLong()
-            locationRequest.fastestInterval = (1 * 1000).toLong()
-            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-
-            locationCallback = object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult?) {
-                    if (locationResult == null) {
-                        // Save without the location.
-                        Log.i(TAG, "Saving without location because location cannot be acquired")
-
-                        runOnUiThread {
-                            progressDialog?.dismiss() // No need to return control to user
-                        }
-
-                        save()
-
-                        return
-                    }
-
-                    // Stop getting location updates.
-                    fusedLocationClient?.removeLocationUpdates(locationCallback)
-
-                    val location = locationResult.locations[0]
-
-                    // Get the coordinates of the location.
-                    currentLatitude = location.latitude
-                    currentLongitude = location.longitude
-
-                    Log.i(TAG, "Saving with the location")
-
-                    runOnUiThread {
-                        progressDialog?.dismiss() // No need to return control to user
-                    }
-
-                    // Save with the location.
-                    save()
-                }
-            }
-
-            // Check or request permission for fine location.
-            if (ActivityCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                locationAllowed = false
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                        Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    ActivityCompat.requestPermissions(this,
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
-                } else {
-                    ActivityCompat.requestPermissions(this,
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
-                }
-            }
-
-            // Do not continue without location permission.
-            if (!locationAllowed) {
-                buttonConfirmInContinue?.isEnabled = true // Return control to user
-                return
-            }
-
-            runOnUiThread {
-                progressDialog?.show()
-            }
-
-            // Start getting location updates.
-            fusedLocationClient!!.requestLocationUpdates(
-                locationRequest,
-                locationCallback!!,
-                Looper.getMainLooper()
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, e.toString())
-
-            runOnUiThread {
-                progressDialog?.dismiss()
-                buttonConfirmInContinue?.isEnabled = true // Return control to user
-            }
-        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int,
@@ -308,7 +247,7 @@ class PunchInConfirmActivity : AppCompatActivity() {
                                 PackageManager.PERMISSION_GRANTED)) {
                         // Continue with the existing workflow.
                         locationAllowed = true
-                        getLocation()
+                        // TODO Go back to save
                     }
                 } else {
                     Log.w(TAG, "Does not have permission, cannot continue")
@@ -319,68 +258,88 @@ class PunchInConfirmActivity : AppCompatActivity() {
         }
     }
 
-    fun save() {
-        runOnUiThread {
-            // Prepare a progress dialog.
-            val builder = AlertDialog.Builder(this)
-            builder.setMessage("Saving")
-            builder.setCancelable(false)
-            progressDialog = builder.create()
-            progressDialog?.setCancelable(false)
-            progressDialog?.setCanceledOnTouchOutside(false)
-            progressDialog?.show()
-        }
+    private fun save() {
+        try {
+            val user = (application as MyApplication).user
 
-        val intent = Intent(this, StatusActivity::class.java)
+            // If coordinates are not available, but the user location is required,
+            // then prompt the user and do not continue.
+            if (user.requiresLocation && currentLatitude == 0.0 && currentLatitude == 0.0) {
+                showDialog("Location is not available but is required by BRIZBEE")
+                return
+            }
 
-        // Instantiate the RequestQueue.
-        val builder = StringBuilder()
-        builder.append("${(application as MyApplication).baseUrl}/api/Kiosk/PunchIn")
-            .append("?taskId=${task!!["Id"]}")
-            .append("&sourceHardware=Mobile")
-            .append("&timeZone=${selectedTimeZone}")
-            .append("&sourceOperatingSystem=Android")
-            .append("&sourceOperatingSystemVersion=${Build.VERSION.RELEASE}")
-            .append("&sourceBrowser=N/A")
-            .append("&sourceBrowserVersion=N/A")
+            runOnUiThread {
+                buttonConfirmInContinue?.isEnabled = false // Prevent double submission
 
-        if (currentLatitude != 0.0 && currentLatitude != 0.0) {
-            builder.append("&latitude=$currentLatitude")
-            builder.append("&longitude=$currentLongitude")
-        } else {
-            builder.append("&latitude=")
-            builder.append("&longitude=")
-        }
+                // Prepare a progress dialog.
+                val builder = AlertDialog.Builder(this)
+                builder.setMessage("Saving")
+                builder.setCancelable(false)
+                progressDialog = builder.create()
+                progressDialog?.setCancelable(false)
+                progressDialog?.setCanceledOnTouchOutside(false)
+                progressDialog?.show()
+            }
 
-        val request: JsonObjectRequest = object : JsonObjectRequest(Method.POST, builder.toString(), null,
-            { response ->
-                runOnUiThread {
-                    progressDialog?.dismiss()
-                    startActivity(intent)
-                    finish()
-                }
-            }, { error ->
-                runOnUiThread {
-                    val response = error.networkResponse
-                    when (response.statusCode) {
-                        else -> {
-                            progressDialog?.dismiss()
-                            showDialog("Could not reach the server, please try again.")
+            val intent = Intent(this, StatusActivity::class.java)
+
+            // Instantiate the RequestQueue.
+            val builder = StringBuilder()
+            builder.append("${(application as MyApplication).baseUrl}/api/Kiosk/PunchIn")
+                .append("?taskId=${task!!["Id"]}")
+                .append("&sourceHardware=Mobile")
+                .append("&timeZone=${selectedTimeZone}")
+                .append("&sourceOperatingSystem=Android")
+                .append("&sourceOperatingSystemVersion=${Build.VERSION.RELEASE}")
+                .append("&sourceBrowser=N/A")
+                .append("&sourceBrowserVersion=N/A")
+
+            if (currentLatitude != 0.0 && currentLatitude != 0.0) {
+                builder.append("&latitude=$currentLatitude")
+                builder.append("&longitude=$currentLongitude")
+            } else {
+                builder.append("&latitude=")
+                builder.append("&longitude=")
+            }
+
+            val request: JsonObjectRequest = object : JsonObjectRequest(Method.POST, builder.toString(), null,
+                {
+                    runOnUiThread {
+                        progressDialog?.dismiss()
+                        startActivity(intent)
+                        finish()
+                    }
+                }, { error ->
+                    runOnUiThread {
+                        val response = error.networkResponse
+                        when (response.statusCode) {
+                            else -> {
+                                progressDialog?.dismiss()
+                                showDialog("Could not reach the server, please try again.")
+                            }
                         }
                     }
-                }
-            }) {
+                }) {
                 override fun getHeaders(): Map<String, String> {
                     return (application as MyApplication).authHeaders
                 }
             }
 
-        // Increase number of retries because we may be on a poor connection.
-        request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
+            // Increase number of retries because we may be on a poor connection.
+            request.retryPolicy = DefaultRetryPolicy(10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
 
-        // Add the request to the RequestQueue.
-        request.tag = TAG
-        MySingleton.getInstance(this).addToRequestQueue(request)
+            // Add the request to the RequestQueue.
+            request.tag = TAG
+            MySingleton.getInstance(this).addToRequestQueue(request)
+        } catch (e: Exception) {
+            Log.e(TAG, e.toString())
+
+            runOnUiThread {
+                progressDialog?.dismiss()
+                buttonConfirmInContinue?.isEnabled = true // Return control to user
+            }
+        }
     }
 
     private fun showDialog(message: String) {
