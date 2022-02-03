@@ -36,10 +36,12 @@ import android.view.WindowManager
 import android.widget.Button
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.ExperimentalGetImage
 import com.android.volley.*
 import java.util.HashMap
 import kotlin.concurrent.thread
 
+@ExperimentalGetImage
 class PunchInTaskIdActivity : AppCompatActivity() {
     private var buttonScan: Button? = null
     private var editTaskNumber: EditText? = null
@@ -117,16 +119,17 @@ class PunchInTaskIdActivity : AppCompatActivity() {
             { response ->
                 runOnUiThread {
                     try {
-                        if (response == null) {
-                            // Notify the user that the task number does not exist
-                            showDialog("That's not a valid task number, please try again.")
+                        if (response.getJSONObject("Job").getString("Status").uppercase() != "OPEN") {
+                            // Notify the user that the project is not open
+                            showDialog("The project for that task number is not open, please try again.")
+                            progressDialog?.dismiss()
+                        } else {
+                            val intent = Intent(this, PunchInConfirmActivity::class.java)
+
+                            // Pass the task as a string
+                            intent.putExtra("task", response.toString())
+                            startActivity(intent)
                         }
-
-                        val intent = Intent(this, PunchInConfirmActivity::class.java)
-
-                        // Pass the task as a string
-                        intent.putExtra("task", response.toString())
-                        startActivity(intent)
                     } catch (e: JSONException) {
                         runOnUiThread {
                             progressDialog?.dismiss()
@@ -138,6 +141,10 @@ class PunchInTaskIdActivity : AppCompatActivity() {
                 runOnUiThread {
                     val response = error.networkResponse
                     when (response.statusCode) {
+                        404 -> {
+                            progressDialog?.dismiss()
+                            showDialog("That's not a valid task number, please try again.")
+                        }
                         else -> {
                             progressDialog?.dismiss()
                             showDialog("Could not reach the server, please try again.")

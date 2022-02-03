@@ -123,13 +123,8 @@ class PunchInConfirmActivity : AppCompatActivity() {
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
 
         locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
+            override fun onLocationResult(locationResult: LocationResult) {
                 Log.d(TAG, "Location callback triggered")
-
-                if (locationResult == null) {
-                    Log.d(TAG, "Did not acquire location")
-                    return
-                }
 
                 Log.d(TAG, "Location data acquired")
                 Log.i(TAG, "Stopping location updates and getting coordinates")
