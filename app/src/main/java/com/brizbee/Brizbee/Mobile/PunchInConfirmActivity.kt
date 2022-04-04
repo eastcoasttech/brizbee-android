@@ -76,6 +76,9 @@ class PunchInConfirmActivity : AppCompatActivity() {
         textConfirmJob = findViewById(R.id.textConfirmJob)
         buttonConfirmInContinue = findViewById(R.id.buttonConfirmInContinue)
 
+        // Get the current user.
+        val user = (application as MyApplication).user
+
         try {
             task = JSONObject(intent.getStringExtra("task")!!)
             job = task?.getJSONObject("Job")
@@ -108,59 +111,62 @@ class PunchInConfirmActivity : AppCompatActivity() {
         // Allows getting the location.
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        val lm = getSystemService(LOCATION_SERVICE) as LocationManager
+        if (user.requiresLocation)
+        {
+            val lm = getSystemService(LOCATION_SERVICE) as LocationManager
 
-        // Check if the location service is enabled.
-        if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            Log.w(TAG, "Location services are not enabled")
-            showDialog("Location services are not enabled")
-        }
-
-        // Attempt to get location updates.
-        val locationRequest = LocationRequest.create()
-        locationRequest.interval = (5 * 1000).toLong()
-        locationRequest.fastestInterval = (1 * 1000).toLong()
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                Log.d(TAG, "Location callback triggered")
-
-                Log.d(TAG, "Location data acquired")
-                Log.i(TAG, "Stopping location updates and getting coordinates")
-
-                // Stop getting location updates.
-                fusedLocationClient?.removeLocationUpdates(locationCallback!!)
-
-                val location = locationResult.locations[0]
-
-                // Get the coordinates of the location.
-                currentLatitude = location.latitude
-                currentLongitude = location.longitude
+            // Check if the location service is enabled.
+            if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                Log.w(TAG, "Location services are not enabled")
+                showDialog("Location services are not enabled")
             }
-        }
 
-        // Check or request permission for fine location.
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            locationAllowed = false
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-                ActivityCompat.requestPermissions(this,
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
-            } else {
-                ActivityCompat.requestPermissions(this,
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+            // Attempt to get location updates.
+            val locationRequest = LocationRequest.create()
+            locationRequest.interval = (5 * 1000).toLong()
+            locationRequest.fastestInterval = (1 * 1000).toLong()
+            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+
+            locationCallback = object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult) {
+                    Log.d(TAG, "Location callback triggered")
+
+                    Log.d(TAG, "Location data acquired")
+                    Log.i(TAG, "Stopping location updates and getting coordinates")
+
+                    // Stop getting location updates.
+                    fusedLocationClient?.removeLocationUpdates(locationCallback!!)
+
+                    val location = locationResult.locations[0]
+
+                    // Get the coordinates of the location.
+                    currentLatitude = location.latitude
+                    currentLongitude = location.longitude
+                }
             }
-        }
 
-        thread(start = true) {
-            // Start getting location updates.
-            fusedLocationClient?.requestLocationUpdates(
-                locationRequest,
-                locationCallback!!,
-                Looper.getMainLooper()
-            )
+            // Check or request permission for fine location.
+            if (ActivityCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                locationAllowed = false
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    ActivityCompat.requestPermissions(this,
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+                } else {
+                    ActivityCompat.requestPermissions(this,
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+                }
+            }
+
+            thread(start = true) {
+                // Start getting location updates.
+                fusedLocationClient?.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback!!,
+                    Looper.getMainLooper()
+                )
+            }
         }
 
         // Get timezones from application and configure spinner.
@@ -190,7 +196,6 @@ class PunchInConfirmActivity : AppCompatActivity() {
         }
 
         // Set selected item to be the user's time zone.
-        val user = (application as MyApplication).user
         for (i in timezonesIds.indices) {
             if (timezonesIds[i].equals(user.timeZone, ignoreCase = true)) {
                 spinnerTimeZone?.setSelection(i)
