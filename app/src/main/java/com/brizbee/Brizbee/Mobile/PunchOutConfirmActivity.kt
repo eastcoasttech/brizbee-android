@@ -90,6 +90,12 @@ class PunchOutConfirmActivity : AppCompatActivity() {
                 showDialog("Location services are not enabled")
             }
 
+            // Build a dialog to tell the user we are getting the location
+            val builder = AlertDialog.Builder(this)
+            builder.setCancelable(false)
+            builder.setMessage("Getting your location")
+            val dialog = builder.create()
+
             // Attempt to get location updates.
             val locationRequest = LocationRequest.create()
             locationRequest.interval = (5 * 1000).toLong()
@@ -111,6 +117,10 @@ class PunchOutConfirmActivity : AppCompatActivity() {
                     // Get the coordinates of the location.
                     currentLatitude = location.latitude
                     currentLongitude = location.longitude
+
+                    runOnUiThread {
+                        dialog.dismiss()
+                    }
                 }
             }
 
@@ -129,6 +139,10 @@ class PunchOutConfirmActivity : AppCompatActivity() {
             }
 
             thread(start = true) {
+                runOnUiThread {
+                    dialog.show()
+                }
+
                 // Start getting location updates.
                 fusedLocationClient?.requestLocationUpdates(
                     locationRequest,
@@ -184,7 +198,9 @@ class PunchOutConfirmActivity : AppCompatActivity() {
         MySingleton.getInstance(this).requestQueue.cancelAll(TAG)
 
         // Stop getting location updates.
-        fusedLocationClient?.removeLocationUpdates(locationCallback!!)
+        if (fusedLocationClient != null && locationCallback != null) {
+            fusedLocationClient!!.removeLocationUpdates(locationCallback!!)
+        }
     }
 
     @Suppress("UNUSED_PARAMETER")

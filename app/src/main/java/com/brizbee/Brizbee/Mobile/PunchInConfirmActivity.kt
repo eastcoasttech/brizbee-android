@@ -121,6 +121,12 @@ class PunchInConfirmActivity : AppCompatActivity() {
                 showDialog("Location services are not enabled")
             }
 
+            // Build a dialog to tell the user we are getting the location
+            val builder = AlertDialog.Builder(this)
+            builder.setCancelable(false)
+            builder.setMessage("Getting your location")
+            val dialog = builder.create()
+
             // Attempt to get location updates.
             val locationRequest = LocationRequest.create()
             locationRequest.interval = (5 * 1000).toLong()
@@ -142,6 +148,10 @@ class PunchInConfirmActivity : AppCompatActivity() {
                     // Get the coordinates of the location.
                     currentLatitude = location.latitude
                     currentLongitude = location.longitude
+
+                    runOnUiThread {
+                        dialog.dismiss()
+                    }
                 }
             }
 
@@ -160,6 +170,10 @@ class PunchInConfirmActivity : AppCompatActivity() {
             }
 
             thread(start = true) {
+                runOnUiThread {
+                    dialog.show()
+                }
+
                 // Start getting location updates.
                 fusedLocationClient?.requestLocationUpdates(
                     locationRequest,
@@ -212,7 +226,9 @@ class PunchInConfirmActivity : AppCompatActivity() {
         MySingleton.getInstance(this).requestQueue.cancelAll(TAG)
 
         // Stop getting location updates.
-        fusedLocationClient?.removeLocationUpdates(locationCallback!!)
+        if (fusedLocationClient != null && locationCallback != null) {
+            fusedLocationClient!!.removeLocationUpdates(locationCallback!!)
+        }
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -266,6 +282,11 @@ class PunchInConfirmActivity : AppCompatActivity() {
             // then prompt the user and do not continue.
             if (user.requiresLocation && currentLatitude == 0.0 && currentLatitude == 0.0) {
                 showDialog("Location is not available but is required by BRIZBEE")
+
+                runOnUiThread {
+                    buttonConfirmInContinue?.isEnabled = true // Return control to user
+                }
+
                 return
             }
 
