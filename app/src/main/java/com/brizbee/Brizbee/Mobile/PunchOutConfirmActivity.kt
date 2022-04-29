@@ -99,6 +99,7 @@ class PunchOutConfirmActivity : AppCompatActivity() {
             // Attempt to get location updates.
             val locationRequest = LocationRequest.create()
             locationRequest.interval = (5 * 1000).toLong()
+            locationRequest.maxWaitTime = (60 * 1000).toLong()
             locationRequest.fastestInterval = (1 * 1000).toLong()
             locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
 
@@ -290,7 +291,7 @@ class PunchOutConfirmActivity : AppCompatActivity() {
                 builder.append("&longitude=")
             }
 
-            val request: JsonObjectRequest = object : JsonObjectRequest(Method.POST, builder.toString(), null,
+            val request: MyJsonObjectRequest = object : MyJsonObjectRequest(Method.POST, builder.toString(), null,
                 { response ->
                     runOnUiThread {
                         progressDialog?.dismiss()

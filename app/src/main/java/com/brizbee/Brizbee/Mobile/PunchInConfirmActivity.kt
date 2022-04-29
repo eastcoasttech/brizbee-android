@@ -81,28 +81,28 @@ class PunchInConfirmActivity : AppCompatActivity() {
 
         try {
             task = JSONObject(intent.getStringExtra("task")!!)
-            job = task?.getJSONObject("Job")
-            customer = job?.getJSONObject("Customer")
+            job = task?.getJSONObject("job")
+            customer = job?.getJSONObject("customer")
 
             // Task Number and Name
             textConfirmTask?.text = String.format(
                 "%s - %s",
-                task?.getString("Number"),
-                task?.getString("Name")
+                task?.getString("number"),
+                task?.getString("name")
             )
 
             // Customer Number and Name
             textConfirmCustomer?.text = String.format(
                 "%s - %s",
-                customer?.getString("Number"),
-                customer?.getString("Name")
+                customer?.getString("number"),
+                customer?.getString("name")
             )
 
             // Job Number and Name
             textConfirmJob?.text = String.format(
                 "%s - %s",
-                job?.getString("Number"),
-                job?.getString("Name")
+                job?.getString("number"),
+                job?.getString("name")
             )
         } catch (e: JSONException) {
             showDialog("Could not display the task you selected, please go back and try again.")
@@ -130,6 +130,7 @@ class PunchInConfirmActivity : AppCompatActivity() {
             // Attempt to get location updates.
             val locationRequest = LocationRequest.create()
             locationRequest.interval = (5 * 1000).toLong()
+            locationRequest.maxWaitTime = (60 * 1000).toLong()
             locationRequest.fastestInterval = (1 * 1000).toLong()
             locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
 
@@ -308,7 +309,7 @@ class PunchInConfirmActivity : AppCompatActivity() {
             // Instantiate the RequestQueue.
             val builder = StringBuilder()
             builder.append("${(application as MyApplication).baseUrl}/api/Kiosk/PunchIn")
-                .append("?taskId=${task!!["Id"]}")
+                .append("?taskId=${task!!["id"]}")
                 .append("&sourceHardware=Mobile")
                 .append("&timeZone=${selectedTimeZone}")
                 .append("&sourceOperatingSystem=Android")
@@ -324,7 +325,7 @@ class PunchInConfirmActivity : AppCompatActivity() {
                 builder.append("&longitude=")
             }
 
-            val request: JsonObjectRequest = object : JsonObjectRequest(Method.POST, builder.toString(), null,
+            val request: MyJsonObjectRequest = object : MyJsonObjectRequest(Method.POST, builder.toString(), null,
                 {
                     runOnUiThread {
                         progressDialog?.dismiss()

@@ -60,12 +60,12 @@ class InventoryQuantityActivity : AppCompatActivity() {
         // Set the inventory item details
         try {
 
-            val name = item?.getString("Name")
+            val name = item?.getString("name")
             textInventoryItemName?.setText(name)
 
             // Check for a base unit
-            if (item?.has("BaseUnitName") == true) {
-                val baseUnitName = item?.getString("BaseUnitName")
+            if (item?.has("baseUnitName") == true) {
+                val baseUnitName = item?.getString("baseUnitName")
                 textInventoryItemBaseUnitName?.setText(baseUnitName)
 
                 // Display the base unit

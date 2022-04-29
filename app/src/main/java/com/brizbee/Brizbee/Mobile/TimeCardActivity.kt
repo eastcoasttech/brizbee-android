@@ -180,10 +180,10 @@ class TimeCardActivity : AppCompatActivity() {
                     for (i in 0 until response.length()) {
                         val j = response.getJSONObject(i)
                         val customer = Customer()
-                        customer.name = j.getString("Name")
-                        customer.number = j.getString("Number")
-                        customer.id = j.getInt("Id")
-                        val createdAt = dfServer.parse(j.getString("CreatedAt"))
+                        customer.name = j.getString("name")
+                        customer.number = j.getString("number")
+                        customer.id = j.getInt("id")
+                        val createdAt = dfServer.parse(j.getString("createdAt"))
                         customer.createdAt = createdAt
                         customers.add(customer)
                     }
@@ -248,10 +248,10 @@ class TimeCardActivity : AppCompatActivity() {
                     for (i in 0 until response.length()) {
                         val j = response.getJSONObject(i)
                         val job = Job()
-                        job.name = j.getString("Name")
-                        job.number = j.getString("Number")
-                        job.id = j.getInt("Id")
-                        val createdAt = dfServer.parse(j.getString("CreatedAt"))
+                        job.name = j.getString("name")
+                        job.number = j.getString("number")
+                        job.id = j.getInt("id")
+                        val createdAt = dfServer.parse(j.getString("createdAt"))
                         job.createdAt = createdAt
                         jobs.add(job)
                     }
@@ -316,10 +316,10 @@ class TimeCardActivity : AppCompatActivity() {
                     for (i in 0 until response.length()) {
                         val j = response.getJSONObject(i)
                         val task = Task()
-                        task.name = j.getString("Name")
-                        task.number = j.getString("Number")
-                        task.id = j.getInt("Id")
-                        val createdAt = dfServer.parse(j.getString("CreatedAt"))
+                        task.name = j.getString("name")
+                        task.number = j.getString("number")
+                        task.id = j.getInt("id")
+                        val createdAt = dfServer.parse(j.getString("createdAt"))
                         task.createdAt = createdAt
                         tasks.add(task)
                     }
@@ -388,7 +388,7 @@ class TimeCardActivity : AppCompatActivity() {
             .append("&minutes=${minutes}")
             .append("&enteredAt=${enteredAt}")
 
-        val request: JsonObjectRequest = object : JsonObjectRequest(Method.POST, builder.toString(), null,
+        val request: MyJsonObjectRequest = object : MyJsonObjectRequest(Method.POST, builder.toString(), null,
             { response ->
                 runOnUiThread {
                     progressDialog?.dismiss()

@@ -119,7 +119,7 @@ class PunchInTaskIdActivity : AppCompatActivity() {
             { response ->
                 runOnUiThread {
                     try {
-                        if (response.getJSONObject("Job").getString("Status").uppercase() != "OPEN") {
+                        if (response.getJSONObject("job").getString("status").uppercase() != "OPEN") {
                             // Notify the user that the project is not open
                             showDialog("The project for that task number is not open, please try again.")
                             progressDialog?.dismiss()

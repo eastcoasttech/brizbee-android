@@ -141,9 +141,9 @@ class StatusActivity : AppCompatActivity() {
                     val dfHuman: DateFormat = SimpleDateFormat("MMM dd, yyyy h:mma", Locale.ENGLISH)
 
                     if (response.length() > 0) {
-                        val task = response.getJSONObject("Task")
-                        val job = task.getJSONObject("Job")
-                        val customer = job.getJSONObject("Customer")
+                        val task = response.getJSONObject("task")
+                        val job = task.getJSONObject("job")
+                        val customer = job.getJSONObject("customer")
 
                         // Set color and text of status
                         textStatus!!.setTextColor(ContextCompat.getColor(baseContext, R.color.colorGreenDark))
@@ -153,29 +153,29 @@ class StatusActivity : AppCompatActivity() {
 
                         // Task Number and Name
                         textTask!!.text = String.format("%s - %s",
-                                task.getString("Number"),
-                                task.getString("Name"))
+                                task.getString("number"),
+                                task.getString("name"))
                         textTaskHeader!!.visibility = View.VISIBLE
                         textTask!!.visibility = View.VISIBLE
 
                         // Customer Number and Name
                         textCustomer!!.text = String.format("%s - %s",
-                                customer.getString("Number"),
-                                customer.getString("Name"))
+                                customer.getString("number"),
+                                customer.getString("name"))
                         textCustomerHeader!!.visibility = View.VISIBLE
                         textCustomer!!.visibility = View.VISIBLE
 
                         // Job Number and Name
                         textJob!!.text = String.format("%s - %s",
-                                job.getString("Number"),
-                                job.getString("Name"))
+                                job.getString("number"),
+                                job.getString("name"))
                         textJobHeader!!.visibility = View.VISIBLE
                         textJob!!.visibility = View.VISIBLE
 
                         // Format the since timestamp
-                        val since = dfServer.parse(response.getString("InAt"))
+                        val since = dfServer.parse(response.getString("inAt"))
                         textSince!!.text = dfHuman.format(since!!)
-                        textTimeZone!!.text = response.getString("InAtTimeZone")
+                        textTimeZone!!.text = response.getString("inAtTimeZone")
                         textSinceHeader!!.visibility = View.VISIBLE
                         textSince!!.visibility = View.VISIBLE
                         textTimeZone!!.visibility = View.VISIBLE

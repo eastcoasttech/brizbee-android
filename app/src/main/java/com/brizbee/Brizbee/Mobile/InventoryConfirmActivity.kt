@@ -63,7 +63,7 @@ class InventoryConfirmActivity : AppCompatActivity() {
 
         // Parse object from JSON string
         item = JSONObject(intent.getStringExtra("item")!!)
-        name = item?.getString("Name")
+        name = item?.getString("name")
         quantity = intent.getStringExtra("quantity")
 
         // Set the inventory item details
@@ -115,11 +115,11 @@ class InventoryConfirmActivity : AppCompatActivity() {
         // Instantiate the RequestQueue.
         val builder = StringBuilder()
         builder.append("${(application as MyApplication).baseUrl}/api/Kiosk/InventoryItems/Consume")
-            .append("?qbdInventoryItemId=${item?.getString("Id")}")
+            .append("?qbdInventoryItemId=${item?.getString("id")}")
             .append("&quantity=${quantity}")
             .append("&hostname=${URLEncoder.encode(hostname, "utf-8")}")
 
-        val request: JsonObjectRequest = object : JsonObjectRequest(Method.POST, builder.toString(), null,
+        val request: MyJsonObjectRequest = object : MyJsonObjectRequest(Method.POST, builder.toString(), null,
             { response ->
                 runOnUiThread {
                     progressDialog?.dismiss()

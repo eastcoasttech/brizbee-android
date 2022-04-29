@@ -32,9 +32,7 @@ import com.brizbee.Brizbee.Mobile.models.User;
 import java.util.HashMap;
 
 public class MyApplication extends Application {
-    private String authExpiration;
-    private String authToken;
-    private String authUserId;
+    private String jwt;
     private Organization organization;
     private TimeZone[] timeZones;
     private User user;
@@ -43,12 +41,8 @@ public class MyApplication extends Application {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
 
-        if (authExpiration != null && !authExpiration.isEmpty() &&
-                authToken != null && !authToken.isEmpty() &&
-                authUserId != null && !authUserId.isEmpty()) {
-            headers.put("AUTH_EXPIRATION", authExpiration);
-            headers.put("AUTH_TOKEN", authToken);
-            headers.put("AUTH_USER_ID", authUserId);
+        if (jwt != null && !jwt.isEmpty()) {
+            headers.put("Authorization", "Bearer " + jwt);
         }
 
         return headers;
@@ -57,7 +51,7 @@ public class MyApplication extends Application {
     public String getBaseUrl() {
         if (baseUrl == null || baseUrl.isEmpty())
         {
-            return "https://app-brizbee-prod.azurewebsites.net";
+            return "https://app-brizbee-api-prod.azurewebsites.net";
         }
 
         return baseUrl;
@@ -69,28 +63,12 @@ public class MyApplication extends Application {
 
     private String baseUrl;
 
-    public String getAuthExpiration() {
-        return authExpiration;
+    public String getJwt() {
+        return jwt;
     }
 
-    public void setAuthExpiration(String authExpiration) {
-        this.authExpiration = authExpiration;
-    }
-
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
-    }
-
-    public String getAuthUserId() {
-        return authUserId;
-    }
-
-    public void setAuthUserId(String authUserId) {
-        this.authUserId = authUserId;
+    public void setJwt(String jwt) {
+        this.jwt = jwt;
     }
 
     public Organization getOrganization() {

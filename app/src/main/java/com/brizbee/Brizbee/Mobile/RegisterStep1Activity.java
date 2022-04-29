@@ -156,18 +156,6 @@ public class RegisterStep1Activity extends AppCompatActivity {
                 HashMap<String, String> headers = new HashMap<String, String>();
                 headers.put("Content-Type", "application/json");
 
-                String authExpiration = ((MyApplication) getApplication()).getAuthExpiration();
-                String authToken = ((MyApplication) getApplication()).getAuthToken();
-                String authUserId = ((MyApplication) getApplication()).getAuthUserId();
-
-                if (authExpiration != null && !authExpiration.isEmpty() &&
-                        authToken != null && !authToken.isEmpty() &&
-                        authUserId != null && !authUserId.isEmpty()) {
-                    headers.put("AUTH_EXPIRATION", authExpiration);
-                    headers.put("AUTH_TOKEN", authToken);
-                    headers.put("AUTH_USER_ID", authUserId);
-                }
-
                 return headers;
             }
         };

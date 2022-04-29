@@ -31,12 +31,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.android.volley.*
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.JsonRequest
+import com.android.volley.toolbox.StringRequest
 import com.brizbee.Brizbee.Mobile.models.Organization
 import com.brizbee.Brizbee.Mobile.models.TimeZone
 import com.brizbee.Brizbee.Mobile.models.User
@@ -110,14 +111,10 @@ class LoginPinFragment : Fragment() {
         val request = JsonObjectRequest(Request.Method.POST, url, jsonBody,
             { response ->
                 try {
-                    val authUserId = response.getString("AuthUserId")
-                    val authToken = response.getString("AuthToken")
-                    val authExpiration = response.getString("AuthExpiration")
+                    val jwt = response.getString("token")
 
                     // Set application variables
-                    application?.authExpiration = authExpiration
-                    application?.authToken = authToken
-                    application?.authUserId = authUserId
+                    application?.jwt = jwt
 
                     // Load metadata
                     timeZones
@@ -155,14 +152,12 @@ class LoginPinFragment : Fragment() {
         get() {
             val headers = HashMap<String, String>()
             headers["Content-Type"] = "application/json"
-            val authExpiration = application?.authExpiration
-            val authToken = application?.authToken
-            val authUserId = application?.authUserId
-            if (authExpiration != null && authExpiration.isNotEmpty() && authToken != null && authToken.isNotEmpty() && authUserId != null && authUserId.isNotEmpty()) {
-                headers["AUTH_EXPIRATION"] = authExpiration
-                headers["AUTH_TOKEN"] = authToken
-                headers["AUTH_USER_ID"] = authUserId
+            val jwt = application?.jwt
+
+            if (jwt != null && !jwt.isEmpty()) {
+                headers["Authorization"] = "Bearer $jwt"
             }
+
             return headers
         }
 
@@ -175,8 +170,8 @@ class LoginPinFragment : Fragment() {
                         val timezones = arrayOfNulls<TimeZone>(response.length())
                         for (i in 0 until response.length()) {
                             val zone = TimeZone()
-                            zone.countryCode = response.getJSONObject(i).getString("CountryCode")
-                            zone.id = response.getJSONObject(i).getString("Id")
+                            zone.countryCode = response.getJSONObject(i).getString("countryCode")
+                            zone.id = response.getJSONObject(i).getString("id")
                             timezones[i] = zone
                         }
 
@@ -220,19 +215,23 @@ class LoginPinFragment : Fragment() {
                     // Format for parsing timestamps from server
                     val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", Locale.ENGLISH)
                     val user = User()
-                    user.createdAt = df.parse(response.getString("CreatedAt"))
-                    user.emailAddress = response.getString("EmailAddress")
-                    user.id = response.getInt("Id")
-                    user.name = response.getString("Name")
-                    user.requiresLocation = response.getBoolean("RequiresLocation")
-                    user.usesMobileClock = response.getBoolean("UsesMobileClock")
-                    user.usesTimesheets = response.getBoolean("UsesTimesheets")
-                    user.timeZone = response.getString("TimeZone")
-                    val organizationJson = response.getJSONObject("Organization")
+                    user.createdAt = df.parse(response.getString("createdAt"))
+
+                    if (!response.isNull("emailAddress")) {
+                        user.emailAddress = response.getString("emailAddress")
+                    }
+
+                    user.id = response.getInt("id")
+                    user.name = response.getString("name")
+                    user.requiresLocation = response.getBoolean("requiresLocation")
+                    user.usesMobileClock = response.getBoolean("usesMobileClock")
+                    user.usesTimesheets = response.getBoolean("usesTimesheets")
+                    user.timeZone = response.getString("timeZone")
+                    val organizationJson = response.getJSONObject("organization")
                     val organization = Organization()
-                    organization.createdAt = df.parse(organizationJson.getString("CreatedAt"))
-                    organization.id = organizationJson.getInt("Id")
-                    organization.name = organizationJson.getString("Name")
+                    organization.createdAt = df.parse(organizationJson.getString("createdAt"))
+                    organization.id = organizationJson.getInt("id")
+                    organization.name = organizationJson.getString("name")
 
                     // Store user in application variable.
                     application?.user = user
