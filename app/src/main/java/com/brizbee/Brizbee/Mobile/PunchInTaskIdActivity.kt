@@ -38,7 +38,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.ExperimentalGetImage
 import com.android.volley.*
-import java.util.HashMap
+import java.util.*
 import kotlin.concurrent.thread
 
 @ExperimentalGetImage
@@ -119,9 +119,12 @@ class PunchInTaskIdActivity : AppCompatActivity() {
             { response ->
                 runOnUiThread {
                     try {
-                        if (response.getJSONObject("job").getString("status").uppercase() != "OPEN") {
+                        val statuses = arrayOf("OPEN", "PROPOSED")
+                        val found = Arrays.stream(statuses).anyMatch { t -> t == response.getJSONObject("job").getString("status").uppercase() }
+
+                        if (!found) {
                             // Notify the user that the project is not open
-                            showDialog("The project for that task number is not open, please try again.")
+                            showDialog("The project for that task number is not open or proposed, please try again.")
                             progressDialog?.dismiss()
                         } else {
                             val intent = Intent(this, PunchInConfirmActivity::class.java)
