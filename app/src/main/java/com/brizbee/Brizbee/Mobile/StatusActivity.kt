@@ -25,23 +25,20 @@ package com.brizbee.Brizbee.Mobile
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.ExperimentalGetImage
 import androidx.core.content.ContextCompat
 import com.android.volley.*
 import com.android.volley.toolbox.JsonObjectRequest
 import org.json.JSONException
-import org.json.JSONObject
-import java.lang.NullPointerException
 import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.jvm.Throws
 
 class StatusActivity : AppCompatActivity() {
     private var textHello: TextView? = null
@@ -97,7 +94,7 @@ class StatusActivity : AppCompatActivity() {
         MySingleton.getInstance(this).requestQueue.cancelAll(TAG)
     }
 
-    @Suppress("UNUSED_PARAMETER")
+    @ExperimentalGetImage @Suppress("UNUSED_PARAMETER")
     fun onPunchInClick(view: View?) {
         val intent = Intent(this, PunchInTaskIdActivity::class.java)
         startActivity(intent)

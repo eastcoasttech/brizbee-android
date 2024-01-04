@@ -136,11 +136,10 @@ class BarcodeScanActivity : AppCompatActivity() {
 
             // define the actual functionality of our analysis use case
             analysisUseCase.setAnalyzer(
-                Executors.newSingleThreadExecutor(),
-                { imageProxy ->
-                    processImageProxy(scanner, imageProxy)
-                }
-            )
+                Executors.newSingleThreadExecutor()
+            ) { imageProxy ->
+                processImageProxy(scanner, imageProxy)
+            }
 
             // configure to use the back camera
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA

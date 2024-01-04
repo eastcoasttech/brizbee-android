@@ -53,7 +53,7 @@ class PunchInTaskIdActivity : AppCompatActivity() {
 
     private val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val scanContent = result.data?.extras?.get("BarCodeValue").toString()
+            val scanContent = result.data?.extras?.getString("BarCodeValue")
             editTaskNumber?.setText(scanContent)
 
             // Verify that the barcode is valid.

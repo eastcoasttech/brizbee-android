@@ -83,7 +83,7 @@ public class RegisterStep1Activity extends AppCompatActivity {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         // Instantiate the RequestQueue
-        String url = "https://app-brizbee-prod.azurewebsites.net/odata/Users/Default.Register";
+        String url = "https://api-production-1.brizbee.com/odata/Users/Default.Register";
 
         // Random organization code and user pin
         String organizationCode = String.valueOf(Math.floor((Math.random() * 99999) + 10000));

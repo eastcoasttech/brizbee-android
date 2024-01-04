@@ -2,5 +2,6 @@
 <network-security-config>
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">app-brizbee-api-prod.azurewebsites.net</domain>
+        <domain includeSubdomains="true">brizbee.com</domain>
     </domain-config>
 </network-security-config>

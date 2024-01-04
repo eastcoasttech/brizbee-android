@@ -24,7 +24,6 @@
 package com.brizbee.Brizbee.Mobile
 
 import android.content.Intent
-import android.opengl.Visibility
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
@@ -61,12 +60,12 @@ class InventoryQuantityActivity : AppCompatActivity() {
         try {
 
             val name = item?.getString("name")
-            textInventoryItemName?.setText(name)
+            textInventoryItemName?.text = name
 
             // Check for a base unit
             if (item?.has("baseUnitName") == true) {
                 val baseUnitName = item?.getString("baseUnitName")
-                textInventoryItemBaseUnitName?.setText(baseUnitName)
+                textInventoryItemBaseUnitName?.text = baseUnitName
 
                 // Display the base unit
                 textInventoryItemBaseUnitName?.visibility = View.VISIBLE

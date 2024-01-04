@@ -23,7 +23,6 @@
 
 package com.brizbee.Brizbee.Mobile
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -32,7 +31,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.android.volley.*
@@ -160,7 +158,7 @@ class LoginEmailFragment : Fragment() {
             headers["Content-Type"] = "application/json"
             val jwt = application?.jwt
 
-            if (jwt != null && !jwt.isEmpty()) {
+            if (!jwt.isNullOrEmpty()) {
                 headers["Authorization"] = "Bearer $jwt"
             }
 

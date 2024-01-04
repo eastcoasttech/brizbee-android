@@ -26,7 +26,6 @@ package com.brizbee.Brizbee.Mobile
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
@@ -37,7 +36,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.*
 import com.android.volley.toolbox.JsonArrayRequest
-import com.android.volley.toolbox.JsonObjectRequest
 import com.brizbee.Brizbee.Mobile.models.Customer
 import com.brizbee.Brizbee.Mobile.models.Job
 import com.brizbee.Brizbee.Mobile.models.Task
@@ -389,7 +387,7 @@ class TimeCardActivity : AppCompatActivity() {
             .append("&enteredAt=${enteredAt}")
 
         val request: MyJsonObjectRequest = object : MyJsonObjectRequest(Method.POST, builder.toString(), null,
-            { response ->
+            { _ ->
                 runOnUiThread {
                     progressDialog?.dismiss()
                     startActivity(intent)

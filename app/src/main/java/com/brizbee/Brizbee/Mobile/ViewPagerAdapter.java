@@ -23,35 +23,29 @@
 
 package com.brizbee.Brizbee.Mobile;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.fragment.app.FragmentActivity;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-public class PagerAdapter extends FragmentStatePagerAdapter {
-    int mNumOfTabs;
+public class ViewPagerAdapter extends FragmentStateAdapter {
 
-    public PagerAdapter(FragmentManager fm, int NumOfTabs) {
-        super(fm);
-        this.mNumOfTabs = NumOfTabs;
+    public ViewPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
+        super(fragmentActivity);
     }
 
+    @NonNull
     @Override
-    public Fragment getItem(int position) {
-
-        switch (position) {
-            case 0:
-                LoginPinFragment tab1 = new LoginPinFragment();
-                return tab1;
-            case 1:
-                LoginEmailFragment tab2 = new LoginEmailFragment();
-                return tab2;
-            default:
-                return null;
+    public Fragment createFragment(int position) {
+        if (position == 0) {
+            return new LoginPinFragment();
+        } else {
+            return new LoginEmailFragment();
         }
     }
 
     @Override
-    public int getCount() {
-        return mNumOfTabs;
+    public int getItemCount() {
+        return 2;
     }
 }

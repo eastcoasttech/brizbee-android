@@ -31,10 +31,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.viewpager.widget.ViewPager
+import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
-import com.google.android.material.tabs.TabLayout.TabLayoutOnPageChangeListener
 import kotlin.concurrent.thread
 
 class LoginActivity : AppCompatActivity() {
@@ -70,10 +69,9 @@ class LoginActivity : AppCompatActivity() {
         tabLayout.tabGravity = TabLayout.GRAVITY_FILL
 
         // Setup the view pager that shows the tab content
-        val viewPager = findViewById<View>(R.id.pager) as ViewPager
-        val adapter = PagerAdapter(supportFragmentManager, tabLayout.tabCount)
-        viewPager.adapter = adapter
-        viewPager.addOnPageChangeListener(TabLayoutOnPageChangeListener(tabLayout))
+        val viewPager = findViewById<ViewPager2>(R.id.pager)
+        val viewPagerAdapter = ViewPagerAdapter(this)
+        viewPager.adapter = viewPagerAdapter
 
         tabLayout.addOnTabSelectedListener(object : OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
@@ -90,16 +88,6 @@ class LoginActivity : AppCompatActivity() {
 
         when (requestCode) {
             MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
-
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.isNotEmpty()
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
                 return
             }
         }

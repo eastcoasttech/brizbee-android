@@ -32,8 +32,10 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.ExperimentalGetImage
 import com.android.volley.*
 import com.android.volley.toolbox.JsonObjectRequest
 import kotlin.concurrent.thread
@@ -49,7 +51,7 @@ class InventoryItemActivity : AppCompatActivity() {
 
     private val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val scanContent = result.data?.extras?.get("BarCodeValue").toString()
+            val scanContent = result.data?.extras?.getString("BarCodeValue")
             editBarCodeValue?.setText(scanContent)
 
             // Verify that the barcode is valid.
@@ -59,7 +61,7 @@ class InventoryItemActivity : AppCompatActivity() {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    @OptIn(ExperimentalGetImage::class) override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_inventory_item)
 

@@ -120,7 +120,7 @@ class InventoryConfirmActivity : AppCompatActivity() {
             .append("&hostname=${URLEncoder.encode(hostname, "utf-8")}")
 
         val request: MyJsonObjectRequest = object : MyJsonObjectRequest(Method.POST, builder.toString(), null,
-            { response ->
+            { _ ->
                 runOnUiThread {
                     progressDialog?.dismiss()
 

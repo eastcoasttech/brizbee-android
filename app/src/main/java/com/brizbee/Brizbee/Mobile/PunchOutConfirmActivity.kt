@@ -24,19 +24,18 @@ package com.brizbee.Brizbee.Mobile
 
 import android.Manifest
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.location.LocationCallback
 import android.widget.Spinner
-import com.google.android.gms.location.FusedLocationProviderClient
 import android.os.Bundle
-import com.google.android.gms.location.LocationServices
 import android.widget.ArrayAdapter
 import android.widget.AdapterView
 import android.content.Intent
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import android.os.Build
-import com.android.volley.toolbox.JsonObjectRequest
-import kotlin.Throws
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Looper
@@ -47,20 +46,33 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.android.volley.*
 import java.lang.Exception
-import java.util.HashMap
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
 class PunchOutConfirmActivity : AppCompatActivity() {
     private var currentLatitude = 0.0
     private var currentLongitude = 0.0
     private var buttonConfirmOutContinue: Button? = null
-    private var locationCallback: LocationCallback? = null
     private var spinnerTimeZone: Spinner? = null
     private lateinit var timezonesIds: Array<String?>
     private var selectedTimeZone: String? = null
-    private var fusedLocationClient: FusedLocationProviderClient? = null
     private var locationAllowed = true
     var progressDialog: AlertDialog? = null
+
+    // FusedLocationProviderClient - Main class for receiving location updates.
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
+    // LocationRequest - Requirements for the location updates, i.e., how often you
+    // should receive updates, the priority, etc.
+    private lateinit var locationRequest: LocationRequest
+
+    // LocationCallback - Called when FusedLocationProviderClient has a new Location.
+    private lateinit var locationCallback: LocationCallback
+
+    // Used only for local storage of the last known location. Usually, this would be saved to your
+    // database, but because this is a simplified sample without a full database, we only need the
+    // last location to create a Notification if the user navigates away from the app.
+    private var currentLocationResult: LocationResult? = null
 
     companion object {
         val TAG = PunchOutConfirmActivity::class.qualifiedName
@@ -77,8 +89,6 @@ class PunchOutConfirmActivity : AppCompatActivity() {
         // Get the current user.
         val user = (application as MyApplication).user
 
-        // Allows getting the location.
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         if (user.requiresLocation)
         {
@@ -86,7 +96,7 @@ class PunchOutConfirmActivity : AppCompatActivity() {
 
             // Check if the location service is enabled.
             if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                Log.w(TAG, "Location services are not enabled")
+                Log.w(PunchInConfirmActivity.TAG, "Location services are not enabled")
                 showDialog("Location services are not enabled")
             }
 
@@ -97,33 +107,11 @@ class PunchOutConfirmActivity : AppCompatActivity() {
             val dialog = builder.create()
 
             // Attempt to get location updates.
-            val locationRequest = LocationRequest.create()
-            locationRequest.interval = (5 * 1000).toLong()
-            locationRequest.maxWaitTime = (60 * 1000).toLong()
-            locationRequest.fastestInterval = (1 * 1000).toLong()
-            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-
-            locationCallback = object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult) {
-                    Log.d(TAG, "Location callback triggered")
-
-                    Log.d(TAG, "Location data acquired")
-                    Log.i(TAG, "Stopping location updates and getting coordinates")
-
-                    // Stop getting location updates.
-                    fusedLocationClient?.removeLocationUpdates(locationCallback!!)
-
-                    val location = locationResult.locations[0]
-
-                    // Get the coordinates of the location.
-                    currentLatitude = location.latitude
-                    currentLongitude = location.longitude
-
-                    runOnUiThread {
-                        dialog.dismiss()
-                    }
-                }
-            }
+            val intervalMillis = TimeUnit.SECONDS.toMillis(5)
+            val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalMillis).apply {
+                setDurationMillis(TimeUnit.SECONDS.toMillis(30))
+                setMaxUpdateAgeMillis(TimeUnit.SECONDS.toMillis(60))
+            }.build()
 
             // Check or request permission for fine location.
             if (ActivityCompat.checkSelfPermission(this,
@@ -141,15 +129,45 @@ class PunchOutConfirmActivity : AppCompatActivity() {
 
             thread(start = true) {
                 runOnUiThread {
+                    Log.d(PunchInConfirmActivity.TAG, "Showing dialog")
                     dialog.show()
                 }
 
+                Log.i(PunchInConfirmActivity.TAG, "Requesting location updates")
+
+                // Allows getting the location.
+                fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+
+                locationCallback = object : LocationCallback() {
+                    override fun onLocationResult(locationResult: LocationResult) {
+                        super.onLocationResult(locationResult)
+
+                        Log.d(PunchInConfirmActivity.TAG, "Location callback triggered")
+
+                        Log.i(PunchInConfirmActivity.TAG, "Stopping location updates and attempting to get coordinates")
+
+                        // Stop getting location updates.
+                        fusedLocationProviderClient.removeLocationUpdates(locationCallback)
+
+                        val currentLocation = locationResult.lastLocation
+
+                        // Get the coordinates of the location.
+                        if (currentLocation != null) {
+                            currentLatitude = currentLocation.latitude
+                            currentLongitude = currentLocation.longitude
+                        }
+
+                        runOnUiThread {
+                            Log.d(PunchInConfirmActivity.TAG, "Dismissing dialog")
+                            dialog.dismiss()
+                        }
+                    }
+                }
+
+                Log.d(PunchInConfirmActivity.TAG, "Starting to request updates")
+
                 // Start getting location updates.
-                fusedLocationClient?.requestLocationUpdates(
-                    locationRequest,
-                    locationCallback!!,
-                    Looper.getMainLooper()
-                )
+                fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
             }
         }
 
@@ -193,15 +211,13 @@ class PunchOutConfirmActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
-        Log.i(TAG, "Stopping location updates and cancelling all queued requests")
+        Log.i(PunchInConfirmActivity.TAG, "Stopping location updates and cancelling all queued requests")
 
         // Ensure requests do not continue in the background.
-        MySingleton.getInstance(this).requestQueue.cancelAll(TAG)
+        MySingleton.getInstance(this).requestQueue.cancelAll(PunchInConfirmActivity.TAG)
 
         // Stop getting location updates.
-        if (fusedLocationClient != null && locationCallback != null) {
-            fusedLocationClient!!.removeLocationUpdates(locationCallback!!)
-        }
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback)
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -253,7 +269,7 @@ class PunchOutConfirmActivity : AppCompatActivity() {
 
             // If coordinates are not available, but the user location is required,
             // then prompt the user and do not continue.
-            if (user.requiresLocation && currentLatitude == 0.0 && currentLatitude == 0.0) {
+            if (user.requiresLocation && currentLatitude == 0.0 && currentLongitude == 0.0) {
                 showDialog("Location is not available but is required by BRIZBEE")
                 return
             }
@@ -283,7 +299,7 @@ class PunchOutConfirmActivity : AppCompatActivity() {
                 .append("&sourceBrowser=N/A")
                 .append("&sourceBrowserVersion=N/A")
 
-            if (currentLatitude != 0.0 && currentLatitude != 0.0) {
+            if (currentLatitude != 0.0 && currentLongitude != 0.0) {
                 builder.append("&latitude=$currentLatitude")
                 builder.append("&longitude=$currentLongitude")
             } else {
@@ -292,7 +308,7 @@ class PunchOutConfirmActivity : AppCompatActivity() {
             }
 
             val request: MyJsonObjectRequest = object : MyJsonObjectRequest(Method.POST, builder.toString(), null,
-                { response ->
+                { _ ->
                     runOnUiThread {
                         progressDialog?.dismiss()
                         startActivity(intent)
