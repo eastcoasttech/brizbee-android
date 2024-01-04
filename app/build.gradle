@@ -10,8 +10,8 @@ android {
         applicationId "com.brizbee.Brizbee.Mobile"
         minSdkVersion 24
         targetSdkVersion 34
-        versionCode 22
-        versionName "4.9"
+        versionCode 23
+        versionName "4.9.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
