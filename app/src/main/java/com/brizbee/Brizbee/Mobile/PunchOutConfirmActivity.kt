@@ -82,6 +82,9 @@ class PunchOutConfirmActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_punch_out_confirm)
 
+        // Initialize the location provider immediately.
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+
         // Get references from layouts.
         spinnerTimeZone = findViewById(R.id.spinnerTimeZone)
         buttonConfirmOutContinue = findViewById(R.id.buttonConfirmOutContinue)
@@ -134,9 +137,6 @@ class PunchOutConfirmActivity : AppCompatActivity() {
                 }
 
                 Log.i(PunchInConfirmActivity.TAG, "Requesting location updates")
-
-                // Allows getting the location.
-                fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
                 locationCallback = object : LocationCallback() {
                     override fun onLocationResult(locationResult: LocationResult) {
@@ -217,7 +217,9 @@ class PunchOutConfirmActivity : AppCompatActivity() {
         MySingleton.getInstance(this).requestQueue.cancelAll(PunchInConfirmActivity.TAG)
 
         // Stop getting location updates.
-        fusedLocationProviderClient.removeLocationUpdates(locationCallback)
+        if (this::fusedLocationProviderClient.isInitialized && this::locationCallback.isInitialized) {
+            fusedLocationProviderClient.removeLocationUpdates(locationCallback)
+        }
     }
 
     @Suppress("UNUSED_PARAMETER")

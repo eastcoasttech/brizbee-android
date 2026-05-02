@@ -231,7 +231,7 @@ class StatusActivity : AppCompatActivity() {
     private fun loadUser() {
         val user = (application as MyApplication).user
 
-        textHello!!.text = String.format("Hello, %s", user.name)
+        textHello!!.text = String.format("Hello, %s", user?.name)
 
         // Logout immediately if the user is not allowed to use mobile app.
         if (!user.usesMobileClock)
