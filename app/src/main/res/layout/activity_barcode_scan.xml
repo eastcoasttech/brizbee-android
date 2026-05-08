@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:background="@color/colorBrandBlack"
+    android:fitsSystemWindows="true"
     tools:context=".BarcodeScanActivity">
 
     <androidx.camera.view.PreviewView
